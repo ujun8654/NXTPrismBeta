@@ -122,14 +122,14 @@ export default function AuditReports() {
                   {/* Row */}
                   <button
                     onClick={() => handleToggleDetail(ex.export_id)}
-                    className={`w-full flex items-center gap-4 px-4 py-2.5 text-xs text-left transition-colors hover:bg-white/[0.02] ${isOpen ? 'bg-white/[0.03]' : ''}`}
+                    className={`w-full grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)_1rem] items-center gap-2 px-4 py-2.5 text-xs text-left transition-colors hover:bg-white/[0.02] ${isOpen ? 'bg-white/[0.03]' : ''}`}
                   >
-                    <span className="w-28 flex-shrink-0"><StatusBadge variant="info" label={tType(ex.export_type)} /></span>
-                    <span className="w-24 flex-shrink-0 text-neutral-500 font-mono">{ex.export_id?.slice(0, 8)}...</span>
-                    <span className="w-32 flex-shrink-0 text-neutral-600 font-mono">{ex.report_hash?.slice(0, 12)}...</span>
-                    <span className="w-20 flex-shrink-0 text-neutral-400 truncate">{ex.requested_by}</span>
-                    <span className="flex-1 text-neutral-500 text-right">{new Date(ex.created_at).toLocaleString('ko-KR')}</span>
-                    <span className="text-neutral-600 text-[10px] ml-2">{isOpen ? '▾' : '▸'}</span>
+                    <span className="overflow-hidden"><StatusBadge variant="info" label={tType(ex.export_type)} /></span>
+                    <span className="text-neutral-500 font-mono truncate">{ex.export_id?.slice(0, 8)}...</span>
+                    <span className="text-neutral-600 font-mono truncate">{ex.report_hash?.slice(0, 12)}...</span>
+                    <span className="text-neutral-400 truncate">{ex.requested_by}</span>
+                    <span className="text-neutral-500 text-right truncate">{new Date(ex.created_at).toLocaleString('ko-KR')}</span>
+                    <span className="text-neutral-600 text-[10px] text-right">{isOpen ? '▾' : '▸'}</span>
                   </button>
 
                   {/* Inline Detail */}

@@ -111,14 +111,14 @@ export default function OverrideGovernance() {
                   {/* Row */}
                   <button
                     onClick={() => handleToggle(o.override_id)}
-                    className={`w-full flex items-center gap-4 px-4 py-2.5 text-xs text-left transition-colors hover:bg-white/[0.02] ${isOpen ? 'bg-white/[0.03]' : ''}`}
+                    className={`w-full grid grid-cols-[minmax(0,1.5fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)_1rem] items-center gap-2 px-4 py-2.5 text-xs text-left transition-colors hover:bg-white/[0.02] ${isOpen ? 'bg-white/[0.03]' : ''}`}
                   >
-                    <span className="w-24 flex-shrink-0"><StatusBadge variant={STATUS_VARIANT[o.status] || 'neutral'} label={tStatus(o.status)} /></span>
-                    <span className="w-36 flex-shrink-0 text-neutral-300 truncate">{o.reason_code}</span>
-                    <span className="w-40 flex-shrink-0 text-neutral-400">{o.from_state} → {o.to_state}</span>
-                    <span className="w-24 flex-shrink-0 text-neutral-400 truncate">{o.requested_by}</span>
-                    <span className="flex-1 text-neutral-500 text-right">{new Date(o.requested_at).toLocaleString('ko-KR')}</span>
-                    <span className="text-neutral-600 text-[10px] ml-2">{isOpen ? '▾' : '▸'}</span>
+                    <span className="overflow-hidden"><StatusBadge variant={STATUS_VARIANT[o.status] || 'neutral'} label={tStatus(o.status)} /></span>
+                    <span className="text-neutral-300 truncate">{o.reason_code}</span>
+                    <span className="text-neutral-400 truncate">{o.from_state} → {o.to_state}</span>
+                    <span className="text-neutral-400 truncate">{o.requested_by}</span>
+                    <span className="text-neutral-500 text-right truncate">{new Date(o.requested_at).toLocaleString('ko-KR')}</span>
+                    <span className="text-neutral-600 text-[10px] text-right">{isOpen ? '▾' : '▸'}</span>
                   </button>
 
                   {/* Inline Detail */}
