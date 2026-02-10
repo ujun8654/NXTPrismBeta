@@ -2,8 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { AuditExporter } from '@nxtprism/export-audit';
 
 export function registerExportRoutes(app: FastifyInstance, exporter: AuditExporter) {
-  // POST /v1/exports:audit-report — 종합 감사 보고서
-  app.post('/v1/exports:audit-report', async (request, reply) => {
+  // POST /v1/exports/audit-report — 종합 감사 보고서
+  app.post('/v1/exports/audit-report', async (request, reply) => {
     const body = request.body as { tenant_id: string; requested_by?: string; date_from?: string; date_to?: string };
 
     if (!body.tenant_id) {
@@ -18,8 +18,8 @@ export function registerExportRoutes(app: FastifyInstance, exporter: AuditExport
     return reply.status(201).send(report);
   });
 
-  // POST /v1/exports:decision-export — 단일 결정 내보내기
-  app.post('/v1/exports:decision-export', async (request, reply) => {
+  // POST /v1/exports/decision-export — 단일 결정 내보내기
+  app.post('/v1/exports/decision-export', async (request, reply) => {
     const body = request.body as { tenant_id: string; decision_id: string; requested_by?: string };
 
     if (!body.tenant_id || !body.decision_id) {
@@ -32,8 +32,8 @@ export function registerExportRoutes(app: FastifyInstance, exporter: AuditExport
     return reply.status(201).send(result);
   });
 
-  // POST /v1/exports:chain-audit — 체인 무결성 감사
-  app.post('/v1/exports:chain-audit', async (request, reply) => {
+  // POST /v1/exports/chain-audit — 체인 무결성 감사
+  app.post('/v1/exports/chain-audit', async (request, reply) => {
     const body = request.body as { tenant_id: string; requested_by?: string };
 
     if (!body.tenant_id) {
@@ -46,8 +46,8 @@ export function registerExportRoutes(app: FastifyInstance, exporter: AuditExport
     return reply.status(201).send(result);
   });
 
-  // POST /v1/exports:compliance-snapshot — 규정 준수 스냅샷
-  app.post('/v1/exports:compliance-snapshot', async (request, reply) => {
+  // POST /v1/exports/compliance-snapshot — 규정 준수 스냅샷
+  app.post('/v1/exports/compliance-snapshot', async (request, reply) => {
     const body = request.body as { tenant_id: string; requested_by?: string };
 
     if (!body.tenant_id) {
@@ -60,8 +60,8 @@ export function registerExportRoutes(app: FastifyInstance, exporter: AuditExport
     return reply.status(201).send(result);
   });
 
-  // POST /v1/exports:override-history — Override 이력 내보내기
-  app.post('/v1/exports:override-history', async (request, reply) => {
+  // POST /v1/exports/override-history — Override 이력 내보내기
+  app.post('/v1/exports/override-history', async (request, reply) => {
     const body = request.body as { tenant_id: string; requested_by?: string };
 
     if (!body.tenant_id) {

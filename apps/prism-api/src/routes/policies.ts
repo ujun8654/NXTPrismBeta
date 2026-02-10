@@ -2,8 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { PolicyEngine } from '@nxtprism/policy-engine';
 
 export function registerPolicyRoutes(app: FastifyInstance, engine: PolicyEngine) {
-  // POST /v1/policies:publish — 정책 배포
-  app.post('/v1/policies:publish', async (request, reply) => {
+  // POST /v1/policies/publish — 정책 배포
+  app.post('/v1/policies/publish', async (request, reply) => {
     const body = request.body as {
       definition: any;
       published_by: string;

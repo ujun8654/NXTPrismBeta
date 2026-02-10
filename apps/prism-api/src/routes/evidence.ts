@@ -2,8 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { EvidenceLedger } from '@nxtprism/evidence-ledger';
 
 export function registerEvidenceRoutes(app: FastifyInstance, ledger: EvidenceLedger) {
-  // POST /v1/evidence:create — 증거 생성
-  app.post('/v1/evidence:create', async (request, reply) => {
+  // POST /v1/evidence/create — 증거 생성
+  app.post('/v1/evidence/create', async (request, reply) => {
     const body = request.body as {
       tenant_id: string;
       payload: Record<string, unknown>;

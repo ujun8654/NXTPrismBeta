@@ -3,8 +3,8 @@ import { OverrideGovernance } from '@nxtprism/override-governance';
 import type { OverrideRequest, OverrideApproval } from '@nxtprism/override-governance';
 
 export function registerOverrideRoutes(app: FastifyInstance, governance: OverrideGovernance) {
-  // POST /v1/overrides:create — Override 요청 생성
-  app.post('/v1/overrides:create', async (request, reply) => {
+  // POST /v1/overrides/create — Override 요청 생성
+  app.post('/v1/overrides/create', async (request, reply) => {
     const body = request.body as OverrideRequest;
 
     if (!body.tenant_id || !body.reason_code || !body.reason_text ||

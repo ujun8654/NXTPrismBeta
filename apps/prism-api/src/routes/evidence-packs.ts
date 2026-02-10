@@ -4,8 +4,8 @@ import type { BuildPackInput } from '@nxtprism/evidence-pack';
 import type { EvidencePack } from '@nxtprism/core-trust';
 
 export function registerEvidencePackRoutes(app: FastifyInstance, packBuilder: EvidencePackBuilder) {
-  // POST /v1/evidence-packs:build — Evidence Pack 생성
-  app.post('/v1/evidence-packs:build', async (request, reply) => {
+  // POST /v1/evidence-packs/build — Evidence Pack 생성
+  app.post('/v1/evidence-packs/build', async (request, reply) => {
     const body = request.body as BuildPackInput;
 
     if (!body.tenant_id || !body.decision || !body.context_refs || !body.policy ||
@@ -36,8 +36,8 @@ export function registerEvidencePackRoutes(app: FastifyInstance, packBuilder: Ev
     return pack;
   });
 
-  // POST /v1/evidence-packs:verify — Evidence Pack 무결성 검증
-  app.post('/v1/evidence-packs:verify', async (request, reply) => {
+  // POST /v1/evidence-packs/verify — Evidence Pack 무결성 검증
+  app.post('/v1/evidence-packs/verify', async (request, reply) => {
     const body = request.body as { manifest: EvidencePack; pack_hash: string };
 
     if (!body.manifest || !body.pack_hash) {

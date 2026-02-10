@@ -1,11 +1,11 @@
 type Variant = 'ok' | 'error' | 'warn' | 'info' | 'neutral';
 
-const COLORS: Record<Variant, string> = {
-  ok: 'bg-green-400/10 text-green-400 border-green-400/30',
-  error: 'bg-red-400/10 text-red-400 border-red-400/30',
-  warn: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30',
-  info: 'bg-blue-400/10 text-blue-400 border-blue-400/30',
-  neutral: 'bg-gray-400/10 text-gray-400 border-gray-400/30',
+const STYLES: Record<Variant, { bg: string; dot: string }> = {
+  ok:      { bg: 'bg-emerald-500/10 text-emerald-400', dot: 'bg-emerald-400' },
+  error:   { bg: 'bg-red-500/10 text-red-400', dot: 'bg-red-400' },
+  warn:    { bg: 'bg-amber-500/10 text-amber-400', dot: 'bg-amber-400' },
+  info:    { bg: 'bg-neutral-500/10 text-neutral-300', dot: 'bg-neutral-400' },
+  neutral: { bg: 'bg-neutral-500/10 text-neutral-500', dot: 'bg-neutral-500' },
 };
 
 interface Props {
@@ -15,18 +15,10 @@ interface Props {
 }
 
 export default function StatusBadge({ variant, label, pulse }: Props) {
+  const s = STYLES[variant];
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border ${COLORS[variant]}`}
-    >
-      <span
-        className={`w-1.5 h-1.5 rounded-full ${
-          variant === 'ok' ? 'bg-green-400' :
-          variant === 'error' ? 'bg-red-400' :
-          variant === 'warn' ? 'bg-yellow-400' :
-          variant === 'info' ? 'bg-blue-400' : 'bg-gray-400'
-        } ${pulse ? 'pulse-green' : ''}`}
-      />
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded-full ${s.bg}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot} ${pulse ? 'pulse-dot' : ''}`} />
       {label}
     </span>
   );

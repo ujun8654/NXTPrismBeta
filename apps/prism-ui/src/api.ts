@@ -63,19 +63,19 @@ export const getOverrideDetail = (overrideId: string) =>
 
 // ============ Exports ============
 export const generateAuditReport = (tenantId = TENANT_ID) =>
-  apiCall('POST', '/v1/exports:audit-report', { tenant_id: tenantId, requested_by: 'dashboard' });
+  apiCall('POST', '/v1/exports/audit-report', { tenant_id: tenantId, requested_by: 'dashboard' });
 
 export const generateDecisionExport = (tenantId: string, decisionId: string) =>
-  apiCall('POST', '/v1/exports:decision-export', { tenant_id: tenantId, decision_id: decisionId, requested_by: 'dashboard' });
+  apiCall('POST', '/v1/exports/decision-export', { tenant_id: tenantId, decision_id: decisionId, requested_by: 'dashboard' });
 
 export const generateChainAudit = (tenantId = TENANT_ID) =>
-  apiCall('POST', '/v1/exports:chain-audit', { tenant_id: tenantId, requested_by: 'dashboard' });
+  apiCall('POST', '/v1/exports/chain-audit', { tenant_id: tenantId, requested_by: 'dashboard' });
 
 export const generateComplianceSnapshot = (tenantId = TENANT_ID) =>
-  apiCall('POST', '/v1/exports:compliance-snapshot', { tenant_id: tenantId, requested_by: 'dashboard' });
+  apiCall('POST', '/v1/exports/compliance-snapshot', { tenant_id: tenantId, requested_by: 'dashboard' });
 
 export const generateOverrideHistory = (tenantId = TENANT_ID) =>
-  apiCall('POST', '/v1/exports:override-history', { tenant_id: tenantId, requested_by: 'dashboard' });
+  apiCall('POST', '/v1/exports/override-history', { tenant_id: tenantId, requested_by: 'dashboard' });
 
 export const getExportList = (tenantId = TENANT_ID) =>
   apiCall('GET', `/v1/exports?tenant_id=${tenantId}`);

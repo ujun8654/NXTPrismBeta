@@ -12,119 +12,82 @@ export default function EvidenceChain() {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadHead();
-  }, []);
+  useEffect(() => { loadHead(); }, []);
 
   async function loadHead() {
     setLoading(true);
-    try {
-      const h = await getChainHead();
-      setHead(h);
-    } catch {}
+    try { setHead(await getChainHead()); } catch {}
     setLoading(false);
   }
 
   async function handleVerify() {
     setActionLoading('verify');
-    try {
-      const r = await verifyChain();
-      setVerifyResult(r);
-    } catch (e: any) {
-      setVerifyResult({ error: e.message });
-    }
+    try { setVerifyResult(await verifyChain()); } catch (e: any) { setVerifyResult({ error: e.message }); }
     setActionLoading(null);
   }
 
   async function handleCheckpoint() {
     setActionLoading('checkpoint');
-    try {
-      const r = await createCheckpoint();
-      setCheckpointResult(r);
-    } catch (e: any) {
-      setCheckpointResult({ error: e.message });
-    }
+    try { setCheckpointResult(await createCheckpoint()); } catch (e: any) { setCheckpointResult({ error: e.message }); }
     setActionLoading(null);
   }
 
   async function handleLookup() {
     if (!evidenceLookup.trim()) return;
     setActionLoading('lookup');
-    try {
-      const r = await getEvidence(evidenceLookup.trim());
-      setEvidenceResult(r);
-    } catch (e: any) {
-      setEvidenceResult({ error: e.message });
-    }
+    try { setEvidenceResult(await getEvidence(evidenceLookup.trim())); } catch (e: any) { setEvidenceResult({ error: e.message }); }
     setActionLoading(null);
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 max-w-4xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Evidence Chain</h2>
-        <p className="text-sm text-gray-500 mt-1">해시 체인 무결성 + 증거 레코드 조회</p>
+        <h2 className="text-lg font-semibold text-white">Evidence Chain</h2>
+        <p className="text-xs text-neutral-500 mt-0.5">Hash chain integrity and evidence records</p>
       </div>
 
-      {/* Chain Head */}
       <Section title="Chain Head">
         {loading ? (
-          <p className="text-gray-500 text-sm">Loading...</p>
+          <p className="text-neutral-500 text-xs">Loading...</p>
         ) : head ? (
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-3 text-xs">
             <InfoRow label="Sequence #" value={head.sequence_num} />
             <InfoRow label="Evidence ID" value={head.evidence_id?.slice(0, 16) + '...'} />
             <InfoRow label="Chain Hash" value={head.chain_hash?.slice(0, 24) + '...'} mono />
             <InfoRow label="Created At" value={new Date(head.created_at).toLocaleString('ko-KR')} />
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No evidence records yet</p>
+          <p className="text-neutral-600 text-xs">No evidence records yet</p>
         )}
       </Section>
 
-      {/* 액션 버튼 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Verify */}
         <Section title="Chain Verification">
-          <button
-            onClick={handleVerify}
-            disabled={actionLoading === 'verify'}
-            className="px-4 py-2 bg-green-400/10 hover:bg-green-400/20 text-green-400 border border-green-400/30 rounded text-sm transition-colors disabled:opacity-50"
-          >
-            {actionLoading === 'verify' ? 'Verifying...' : '▶ Verify Chain Integrity'}
-          </button>
+          <Btn onClick={handleVerify} loading={actionLoading === 'verify'} label="Verify Chain" />
           {verifyResult && (
-            <div className="mt-3">
+            <div className="mt-3 space-y-2">
               {verifyResult.valid !== undefined && (
                 <StatusBadge
                   variant={verifyResult.valid ? 'ok' : 'error'}
-                  label={verifyResult.valid ? `VALID — ${verifyResult.records_checked} records checked` : `INVALID at seq ${verifyResult.first_invalid_at}`}
+                  label={verifyResult.valid ? `VALID - ${verifyResult.records_checked} records` : `INVALID at seq ${verifyResult.first_invalid_at}`}
                 />
               )}
-              <JsonViewer data={verifyResult} title="Full Result" />
+              <JsonViewer data={verifyResult} title="Result JSON" />
             </div>
           )}
         </Section>
 
-        {/* Checkpoint */}
         <Section title="Merkle Checkpoint">
-          <button
-            onClick={handleCheckpoint}
-            disabled={actionLoading === 'checkpoint'}
-            className="px-4 py-2 bg-blue-400/10 hover:bg-blue-400/20 text-blue-400 border border-blue-400/30 rounded text-sm transition-colors disabled:opacity-50"
-          >
-            {actionLoading === 'checkpoint' ? 'Creating...' : '▶ Create Checkpoint'}
-          </button>
+          <Btn onClick={handleCheckpoint} loading={actionLoading === 'checkpoint'} label="Create Checkpoint" />
           {checkpointResult && (
             <div className="mt-3">
-              <JsonViewer data={checkpointResult} title="Checkpoint Result" />
+              <JsonViewer data={checkpointResult} title="Checkpoint JSON" />
             </div>
           )}
         </Section>
       </div>
 
-      {/* Evidence Lookup */}
-      <Section title="Evidence Record Lookup">
+      <Section title="Evidence Lookup">
         <div className="flex gap-2">
           <input
             type="text"
@@ -132,15 +95,9 @@ export default function EvidenceChain() {
             value={evidenceLookup}
             onChange={(e) => setEvidenceLookup(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
-            className="flex-1 px-3 py-2 bg-gray-950 border border-gray-700 rounded text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-green-400/50"
+            className="flex-1 px-3 py-2 bg-neutral-950 border border-neutral-700 rounded-md text-xs text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
           />
-          <button
-            onClick={handleLookup}
-            disabled={actionLoading === 'lookup'}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 rounded text-sm transition-colors disabled:opacity-50"
-          >
-            Search
-          </button>
+          <Btn onClick={handleLookup} loading={actionLoading === 'lookup'} label="Search" />
         </div>
         {evidenceResult && (
           <div className="mt-3">
@@ -154,8 +111,8 @@ export default function EvidenceChain() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-      <h3 className="text-sm font-medium text-gray-300 mb-3">{title}</h3>
+    <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
+      <h3 className="text-xs font-medium text-neutral-400 mb-3">{title}</h3>
       {children}
     </div>
   );
@@ -164,8 +121,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function InfoRow({ label, value, mono }: { label: string; value: string | number; mono?: boolean }) {
   return (
     <div>
-      <span className="text-xs text-gray-500">{label}</span>
-      <div className={`text-gray-200 ${mono ? 'font-mono text-xs' : ''}`}>{value}</div>
+      <span className="text-[11px] text-neutral-500">{label}</span>
+      <div className={`text-neutral-200 text-sm ${mono ? 'font-mono text-xs' : ''}`}>{value}</div>
     </div>
+  );
+}
+
+function Btn({ onClick, loading, label }: { onClick: () => void; loading: boolean; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className="px-3 py-2 text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-md transition-colors disabled:opacity-50"
+    >
+      {loading ? 'Processing...' : label}
+    </button>
   );
 }

@@ -3,7 +3,7 @@ import { StateMachineManager } from '@nxtprism/state-machine';
 
 export function registerStateMachineRoutes(app: FastifyInstance, manager: StateMachineManager) {
   // POST /v1/state-machines:register — 머신 정의 등록
-  app.post('/v1/state-machines:register', async (request, reply) => {
+  app.post('/v1/state-machines/register', async (request, reply) => {
     const body = request.body as { definition: any; registered_by: string };
     if (!body.definition || !body.registered_by) {
       return reply.status(400).send({ error: 'definition and registered_by are required' });
@@ -21,7 +21,7 @@ export function registerStateMachineRoutes(app: FastifyInstance, manager: StateM
   });
 
   // POST /v1/state-machines/:machine_id/transitions:authorize — Gate Token 발급
-  app.post('/v1/state-machines/:machine_id/transitions:authorize', async (request, reply) => {
+  app.post('/v1/state-machines/:machine_id/transitions/authorize', async (request, reply) => {
     const { machine_id } = request.params as { machine_id: string };
     const body = request.body as any;
     const token = await manager.authorizeTransition(machine_id, body);
@@ -29,7 +29,7 @@ export function registerStateMachineRoutes(app: FastifyInstance, manager: StateM
   });
 
   // POST /v1/state-machines/:machine_id/transitions:commit — 전이 실행
-  app.post('/v1/state-machines/:machine_id/transitions:commit', async (request, reply) => {
+  app.post('/v1/state-machines/:machine_id/transitions/commit', async (request, reply) => {
     const body = request.body as any;
     const { machine_id } = request.params as { machine_id: string };
     body.machine_id = machine_id;
