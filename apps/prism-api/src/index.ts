@@ -8,12 +8,14 @@ import { PolicyEngine } from '@nxtprism/policy-engine';
 import { StateMachineManager } from '@nxtprism/state-machine';
 import { EvidencePackBuilder } from '@nxtprism/evidence-pack';
 import { DecisionReplayer } from '@nxtprism/decision-replay';
+import { OverrideGovernance } from '@nxtprism/override-governance';
 import { registerEvidenceRoutes } from './routes/evidence';
 import { registerChainRoutes } from './routes/chains';
 import { registerPolicyRoutes } from './routes/policies';
 import { registerStateMachineRoutes } from './routes/state-machines';
 import { registerEvidencePackRoutes } from './routes/evidence-packs';
 import { registerReplayRoutes } from './routes/replay';
+import { registerOverrideRoutes } from './routes/overrides';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -27,6 +29,7 @@ const policyEngine = new PolicyEngine(supabase);
 const stateMachineManager = new StateMachineManager(supabase);
 const packBuilder = new EvidencePackBuilder(supabase);
 const replayer = new DecisionReplayer(policyEngine, packBuilder);
+const overrideGovernance = new OverrideGovernance(supabase, packBuilder);
 
 const app = Fastify({ logger: true });
 
@@ -43,6 +46,7 @@ async function start() {
   registerStateMachineRoutes(app, stateMachineManager);
   registerEvidencePackRoutes(app, packBuilder);
   registerReplayRoutes(app, replayer);
+  registerOverrideRoutes(app, overrideGovernance);
 
   const port = Number(process.env.PORT) || 3000;
   await app.listen({ port, host: '0.0.0.0' });

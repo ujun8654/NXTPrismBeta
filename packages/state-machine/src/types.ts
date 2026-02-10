@@ -82,6 +82,7 @@ export interface TransitionRequest {
     reason: string;
     approved_by: string;
     role: string;
+    override_id?: string;
   };
   triggered_by: string;
 }

@@ -41,7 +41,7 @@ NXTPrism은 **Trust & Evidence Infrastructure**로, AI와 운영 시스템의 �
 
 ---
 
-## 2. 데이터베이스 테이블 (전체 9개)
+## 2. 데이터베이스 테이블 (전체 10개)
 
 ### 2.1 `tenants` — 테넌트 (조직)
 
@@ -311,6 +311,42 @@ MAINTENANCE ──→ SERVICEABLE (RTS: Return to Service)
 
 ---
 
+### 2.10 `overrides` — Override 거버넌스
+
+> **역할:** 강제 전이(Override) 요청·승인·실행을 추적. "예외는 허용, 침묵은 금지" 원칙의 핵심 테이블.
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `override_id` | UUID (PK) | Override 고유 ID |
+| `tenant_id` | UUID (FK → tenants) | 소속 테넌트 |
+| `reason_code` | TEXT | 이유 코드 (EMERGENCY_SAFETY, MAINTENANCE_REQUIRED 등) |
+| `reason_text` | TEXT | 상세 사유 |
+| `impact_scope` | TEXT | 영향 범위 (single_asset / fleet / system) |
+| `duration_minutes` | INTEGER | Override 유효 시간 (분) |
+| `machine_id` | TEXT | 대상 상태 머신 |
+| `asset_ref` | JSONB | 대상 자산 |
+| `from_state` | TEXT | 출발 상태 |
+| `to_state` | TEXT | 도착 상태 |
+| `transition_record_id` | UUID (nullable) | 실행된 전이 기록 |
+| `required_approvals` | JSONB | 필요한 승인 역할 목록 |
+| `approvals` | JSONB | 승인 내역 배열 |
+| `status` | TEXT | REQUESTED → PENDING_APPROVAL → APPROVED → EXECUTED |
+| `evidence_pack_id` | UUID (nullable) | 생성된 Override Evidence Pack ID |
+| `requested_by` | TEXT | 요청자 |
+| `requested_at` | TIMESTAMPTZ | 요청 시각 |
+| `resolved_at` | TIMESTAMPTZ (nullable) | 완료 시각 |
+
+**왜 필요한가:** 안전 위험 상황에서 정상 절차를 우회해야 할 때, Override를 아무 기록 없이 하면 감사 추적이 불가능하다. 이 테이블은 누가, 왜, 언제 Override했는지 + 누가 승인했는지 + Evidence Pack까지 자동 생성하여 완전한 감사 추적을 보장한다.
+
+**워크플로우:**
+```
+1. Override 요청 생성 → status: REQUESTED/PENDING_APPROVAL
+2. 필요 역할 모두 승인 → status: APPROVED
+3. 실행 → status: EXECUTED + Override Evidence Pack 자동 생성
+```
+
+---
+
 ## 3. 패키지 구조
 
 ```
@@ -322,6 +358,7 @@ NXTPrismBeta/
     state-machine/       상태 머신 + Gate Token
     evidence-pack/       증거 팩 (봉인 패키지)
     decision-replay/     결정 재현 (3가지 모드)
+    override-governance/ Override 거버넌스 (다중 승인 + KPI)
   apps/
     prism-api/           Fastify REST API 서버
   scripts/
@@ -394,6 +431,24 @@ NXTPrismBeta/
 | DETERMINISTIC | 원본 정책 버전으로 재평가 → 원본과 일치 여부 확인 |
 | FULL | 원본 + 현재 활성 정책 둘 다 재평가 → 정책 drift 분석 |
 
+### 3.7 `override-governance` — Override 거버넌스
+
+| 기능 | 메서드 | 설명 |
+|------|--------|------|
+| Override 생성 | `createOverride()` | Override 요청 생성 (required_approvals 없으면 즉시 APPROVED) |
+| Override 승인 | `approveOverride()` | 역할별 승인 (모든 필수 역할 승인 시 → APPROVED) |
+| Override 거부 | `rejectOverride()` | 거부 처리 + 사유 기록 |
+| Override 실행 | `executeOverride()` | 만료·중복 체크 후 실행 + Override Evidence Pack 자동 생성 |
+| Override 조회 | `getOverride()` | override_id로 조회 |
+| 목록 조회 | `getOverridesByTenant()` | 테넌트별 Override 목록 (status 필터 가능) |
+| KPI 조회 | `getOverrideKpis()` | 총 건수, status별/reason별/scope별 분포, 평균 승인 시간 |
+
+**핵심 원칙: "예외는 허용, 침묵은 금지"**
+- Override 실행 시 Evidence Pack이 자동 생성됨 (기록 없는 Override 불가)
+- Break-glass: 복수 역할의 승인이 모두 필요한 다중 승인 지원
+- 만료 방지: duration_minutes 초과 시 실행 거부 + EXPIRED 처리
+- 중복 방지: 이미 EXECUTED된 Override는 재실행 불가
+
 ---
 
 ## 4. API 엔드포인트
@@ -445,6 +500,16 @@ NXTPrismBeta/
 |--------|------|------|
 | POST | `/v1/decisions/:decision_id/replay` | 결정 재현 (TRACE/DETERMINISTIC/FULL) |
 
+### 4.8 Override Governance (Override 거버넌스)
+| Method | Path | 설명 |
+|--------|------|------|
+| POST | `/v1/overrides:create` | Override 요청 생성 |
+| GET | `/v1/overrides/:override_id` | Override 조회 |
+| POST | `/v1/overrides/:override_id/approve` | Override 승인 |
+| POST | `/v1/overrides/:override_id/reject` | Override 거부 |
+| GET | `/v1/overrides?tenant_id=...` | Override 목록 조회 |
+| GET | `/v1/overrides/kpis?tenant_id=...` | Override KPI 조회 |
+
 ---
 
 ## 5. 테이블 관계도
@@ -463,8 +528,12 @@ tenants
   │
   ├── asset_states (tenant_id FK)
   │
-  └── evidence_packs (tenant_id FK)
-        └── decision_id로 Decision Replay에서 참조
+  ├── evidence_packs (tenant_id FK)
+  │     └── decision_id로 Decision Replay에서 참조
+  │
+  └── overrides (tenant_id FK)
+        ├── evidence_pack_id → evidence_packs
+        └── transition_record_id → transition_records
 
 policy_versions (독립 — evidence_records.policy_version_id로 참조)
 state_machines (독립 — transition_records.machine_id로 참조)
@@ -481,7 +550,7 @@ state_machines (독립 — transition_records.machine_id로 참조)
 | STEP 3 | State Machine + Gate Token + API | 완료 | 상태 전이, HARD/SOFT/SHADOW gate, Override, 10개 테스트 PASS |
 | STEP 5 | Evidence Pack + API | 완료 | 증거 봉인 패키지, 해시 검증, 7개 테스트 PASS |
 | STEP 6 | Decision Replay + API | 완료 | TRACE/DETERMINISTIC/FULL 3모드, 정책 drift 분석, 6개 테스트 PASS |
-| STEP 7 | Override + Attestation | 미구현 | |
+| STEP 7 | Override Governance | 완료 | 다중 승인, Evidence Pack 자동 생성, KPI 추적, 만료/중복 방지, 8개 테스트 PASS |
 | STEP 8 | Export + Audit Report | 미구현 | |
 | STEP 9 | Dashboard UI | 미구현 | |
 | STEP 10 | Deployment | 미구현 | |
@@ -490,7 +559,15 @@ state_machines (독립 — transition_records.machine_id로 참조)
 
 ---
 
-## 7. 환경 설정
+## 7. GitHub 저장소
+
+- **URL:** https://github.com/ujun8654/NXTPrismBeta (Private)
+- **브랜치:** `main`
+- **제외 파일:** `.env`, `node_modules/`, `*.pptx`, `*.pdf`, `nul`
+
+---
+
+## 8. 환경 설정
 
 ```
 # .env
@@ -516,6 +593,7 @@ npx tsx scripts/test-policy-engine.ts      # 6 tests
 npx tsx scripts/test-state-machine.ts      # 10 tests
 npx tsx scripts/test-evidence-pack.ts      # 7 tests
 npx tsx scripts/test-decision-replay.ts    # 6 tests
+npx tsx scripts/test-override-governance.ts # 8 tests
 ```
 
 **데모 스크립트:**
