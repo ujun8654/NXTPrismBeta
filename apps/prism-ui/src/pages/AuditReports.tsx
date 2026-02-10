@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import JsonViewer from '../components/JsonViewer';
+import ReportViewer from '../components/ReportViewer';
 import { useI18n } from '../i18n';
 import {
   generateAuditReport, generateChainAudit, generateComplianceSnapshot, generateOverrideHistory,
@@ -78,19 +79,7 @@ export default function AuditReports() {
             <p className="text-red-400 text-xs">{result.error}</p>
           ) : (
             <div className="space-y-3">
-              {/* Human-readable summary */}
-              <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg text-[11px] space-y-1.5">
-                <p className="text-emerald-400">{t('report.generatedSuccess')}</p>
-                {result.data?.export_id && (
-                  <div><span className="text-neutral-500">{t('report.exportId')}: </span><span className="text-neutral-300 font-mono">{result.data.export_id.slice(0, 16)}...</span></div>
-                )}
-                {result.data?.report_hash && (
-                  <div><span className="text-neutral-500">{t('report.hash')}: </span><span className="text-neutral-300 font-mono">{result.data.report_hash.slice(0, 24)}...</span></div>
-                )}
-                {result.data?.export_type && (
-                  <div><span className="text-neutral-500">{t('report.reportType')}: </span><span className="text-neutral-300">{t(`report.${result.data.export_type}`) !== `report.${result.data.export_type}` ? t(`report.${result.data.export_type}`) : result.data.export_type}</span></div>
-                )}
-              </div>
+              <ReportViewer type={result.type} data={result.data} />
               <JsonViewer data={result.data} title={t('common.showJson')} />
             </div>
           )}
@@ -148,8 +137,8 @@ export default function AuditReports() {
             <button onClick={() => setSelected(null)} className="text-[11px] text-neutral-500 hover:text-neutral-300">{t('common.close')}</button>
           </div>
 
-          {/* Human-readable summary */}
-          <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-1.5 text-[11px] mb-3">
+          {/* Meta info */}
+          <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg text-[11px] mb-3">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>
                 <span className="text-neutral-500 block">{t('report.reportType')}</span>
@@ -166,8 +155,10 @@ export default function AuditReports() {
             </div>
           </div>
 
-          <JsonViewer data={(selected as any).report} title={t('report.content')} />
-          <div className="mt-2">
+          {/* Report content rendered as human-readable */}
+          <ReportViewer type={(selected as any).export_type} data={(selected as any).report} />
+
+          <div className="mt-3">
             <JsonViewer data={selected} title={t('common.showJson')} />
           </div>
         </div>
