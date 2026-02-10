@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import JsonViewer from '../components/JsonViewer';
 import ReportViewer from '../components/ReportViewer';
@@ -22,6 +22,8 @@ export default function AuditReports() {
   const [generating, setGenerating] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const resultRef = useRef<HTMLDivElement>(null);
+  const detailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadExports(); }, []);
 
@@ -37,12 +39,16 @@ export default function AuditReports() {
       const r = await fn();
       setResult({ type: key, data: r });
       await loadExports();
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (e: any) { setResult({ type: key, error: e.message }); }
     setGenerating(null);
   }
 
   async function handleViewDetail(exportId: string) {
-    try { setSelected(await getExportDetail(exportId)); } catch {}
+    try {
+      setSelected(await getExportDetail(exportId));
+      setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    } catch {}
   }
 
   return (
@@ -70,7 +76,7 @@ export default function AuditReports() {
 
       {/* Result */}
       {result && (
-        <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
+        <div ref={resultRef} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <h3 className="text-xs font-medium text-neutral-400">{t('report.result')}</h3>
             <StatusBadge variant={result.error ? 'error' : 'ok'} label={result.error ? t('common.failed') : t('common.success')} />
@@ -131,7 +137,7 @@ export default function AuditReports() {
 
       {/* Detail Panel */}
       {selected && (
-        <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
+        <div ref={detailRef} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xs font-medium text-neutral-400">{t('report.detailTitle')}</h3>
             <button onClick={() => setSelected(null)} className="text-[11px] text-neutral-500 hover:text-neutral-300">{t('common.close')}</button>

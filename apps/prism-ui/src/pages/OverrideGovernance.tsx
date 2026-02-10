@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import JsonViewer from '../components/JsonViewer';
 import { useI18n } from '../i18n';
@@ -15,6 +15,7 @@ export default function OverrideGovernance() {
   const [selected, setSelected] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const detailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadData(); }, [statusFilter]);
 
@@ -31,7 +32,10 @@ export default function OverrideGovernance() {
   }
 
   async function handleSelect(overrideId: string) {
-    try { setSelected(await getOverrideDetail(overrideId)); } catch {}
+    try {
+      setSelected(await getOverrideDetail(overrideId));
+      setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    } catch {}
   }
 
   function tStatus(status: string) {
@@ -130,7 +134,7 @@ export default function OverrideGovernance() {
 
       {/* Detail Panel */}
       {selected && (
-        <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
+        <div ref={detailRef} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xs font-medium text-neutral-400">{t('override.detailTitle')}</h3>
             <button onClick={() => setSelected(null)} className="text-[11px] text-neutral-500 hover:text-neutral-300">{t('common.close')}</button>
