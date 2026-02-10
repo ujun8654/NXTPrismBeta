@@ -19,7 +19,10 @@ import { registerReplayRoutes } from './routes/replay';
 import { registerOverrideRoutes } from './routes/overrides';
 import { registerExportRoutes } from './routes/exports';
 
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+// 로컬: .env 파일에서 로드 / 배포(Railway 등): 환경변수 직접 주입
+if (!process.env.SUPABASE_URL) {
+  dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+}
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,

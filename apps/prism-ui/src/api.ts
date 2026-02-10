@@ -1,9 +1,10 @@
 // ==============================================
 // NXTPrism Dashboard — API 호출 유틸리티
-// Vite proxy를 통해 /api → localhost:3000 으로 프록시
+// 로컬: Vite proxy /api → localhost:3000
+// 배포: VITE_API_URL 환경변수로 Railway API 서버 직접 연결
 // ==============================================
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 export const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
 export async function apiCall<T = unknown>(
