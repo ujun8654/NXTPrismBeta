@@ -132,6 +132,21 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.10)(tsx@4.21.0)
 
+  packages/export-audit:
+    dependencies:
+      '@nxtprism/evidence-ledger':
+        specifier: workspace:*
+        version: link:../evidence-ledger
+      '@nxtprism/evidence-pack':
+        specifier: workspace:*
+        version: link:../evidence-pack
+      '@nxtprism/override-governance':
+        specifier: workspace:*
+        version: link:../override-governance
+      '@supabase/supabase-js':
+        specifier: ^2.49.1
+        version: 2.95.3
+
   packages/override-governance:
     dependencies:
       '@nxtprism/core-trust':

@@ -41,7 +41,7 @@ NXTPrism은 **Trust & Evidence Infrastructure**로, AI와 운영 시스템의 �
 
 ---
 
-## 2. 데이터베이스 테이블 (전체 10개)
+## 2. 데이터베이스 테이블 (전체 11개)
 
 ### 2.1 `tenants` — 테넌트 (조직)
 
@@ -345,6 +345,31 @@ MAINTENANCE ──→ SERVICEABLE (RTS: Return to Service)
 3. 실행 → status: EXECUTED + Override Evidence Pack 자동 생성
 ```
 
+### 2.11 `audit_exports` — 감사 보고서 내보내기
+
+> **역할:** 생성된 감사 보고서를 DB에 저장. 누가 언제 어떤 보고서를 생성했는지 추적하고, 보고서 자체의 무결성도 해시로 보장.
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `export_id` | UUID (PK) | 내보내기 고유 ID |
+| `tenant_id` | UUID (FK → tenants) | 소속 테넌트 |
+| `export_type` | TEXT | 보고서 유형 |
+| `requested_by` | TEXT | 요청자 |
+| `report` | JSONB | 보고서 본문 |
+| `report_hash` | TEXT | 보고서 SHA-256 해시 |
+| `created_at` | TIMESTAMPTZ | 생성 시각 |
+
+**export_type 값:**
+| 값 | 설명 |
+|----|------|
+| `AUDIT_REPORT` | 종합 감사 보고서 (체인 무결성 + 증거 통계 + Override KPI) |
+| `DECISION_EXPORT` | 단일 결정 내보내기 (Evidence Pack + 연관 증거) |
+| `CHAIN_AUDIT` | 체인 무결성 전수 감사 |
+| `COMPLIANCE_SNAPSHOT` | 규정 준수 스냅샷 (자산 상태 + 활성 정책) |
+| `OVERRIDE_HISTORY` | Override 이력 내보내기 |
+
+**왜 필요한가:** 감사 보고서 자체도 감사 대상이다. "누가 언제 어떤 보고서를 뽑았는지"를 추적할 수 있어야 하고, report_hash로 보고서 변조 여부도 즉시 검증 가능하다.
+
 ---
 
 ## 3. 패키지 구조
@@ -359,6 +384,7 @@ NXTPrismBeta/
     evidence-pack/       증거 팩 (봉인 패키지)
     decision-replay/     결정 재현 (3가지 모드)
     override-governance/ Override 거버넌스 (다중 승인 + KPI)
+    export-audit/        감사 보고서 내보내기 (5가지 보고서)
   apps/
     prism-api/           Fastify REST API 서버
   scripts/
@@ -449,6 +475,23 @@ NXTPrismBeta/
 - 만료 방지: duration_minutes 초과 시 실행 거부 + EXPIRED 처리
 - 중복 방지: 이미 EXECUTED된 Override는 재실행 불가
 
+### 3.8 `export-audit` — 감사 보고서 내보내기
+
+| 기능 | 메서드 | 설명 |
+|------|--------|------|
+| 종합 감사 보고서 | `generateAuditReport()` | 체인 무결성 + 증거 통계 + 정책 이력 + Override KPI + 전이 요약 |
+| 단일 결정 내보내기 | `exportDecision()` | Evidence Pack manifest + 연관 증거 |
+| 체인 무결성 감사 | `auditChainIntegrity()` | 해시체인 전수 검증 + 체크포인트 확인 |
+| 규정 준수 스냅샷 | `generateComplianceSnapshot()` | 자산 상태 + 활성 정책 + Override 현황 |
+| Override 이력 내보내기 | `exportOverrideHistory()` | Override 전체 이력 + KPI |
+| 내보내기 조회 | `getExport()` | export_id로 이전 보고서 재조회 |
+| 내보내기 목록 | `getExportsByTenant()` | 테넌트별 내보내기 이력 |
+
+**핵심 특징:**
+- 모든 보고서는 DB에 자동 저장 + SHA-256 해시로 무결성 보장
+- 7개 데이터 소스를 병렬 수집 (Promise.all)하여 종합 보고서 생성
+- 보고서 자체가 감사 대상 — "누가 언제 어떤 보고서를 생성했는지" 추적 가능
+
 ---
 
 ## 4. API 엔드포인트
@@ -510,6 +553,17 @@ NXTPrismBeta/
 | GET | `/v1/overrides?tenant_id=...` | Override 목록 조회 |
 | GET | `/v1/overrides/kpis?tenant_id=...` | Override KPI 조회 |
 
+### 4.9 Export & Audit Report (감사 보고서)
+| Method | Path | 설명 |
+|--------|------|------|
+| POST | `/v1/exports:audit-report` | 종합 감사 보고서 생성 |
+| POST | `/v1/exports:decision-export` | 단일 결정 내보내기 |
+| POST | `/v1/exports:chain-audit` | 체인 무결성 감사 |
+| POST | `/v1/exports:compliance-snapshot` | 규정 준수 스냅샷 |
+| POST | `/v1/exports:override-history` | Override 이력 내보내기 |
+| GET | `/v1/exports/:export_id` | 이전 내보내기 조회 |
+| GET | `/v1/exports?tenant_id=...` | 내보내기 이력 목록 |
+
 ---
 
 ## 5. 테이블 관계도
@@ -531,9 +585,12 @@ tenants
   ├── evidence_packs (tenant_id FK)
   │     └── decision_id로 Decision Replay에서 참조
   │
-  └── overrides (tenant_id FK)
-        ├── evidence_pack_id → evidence_packs
-        └── transition_record_id → transition_records
+  ├── overrides (tenant_id FK)
+  │     ├── evidence_pack_id → evidence_packs
+  │     └── transition_record_id → transition_records
+  │
+  └── audit_exports (tenant_id FK)
+        └── report_hash로 보고서 무결성 검증
 
 policy_versions (독립 — evidence_records.policy_version_id로 참조)
 state_machines (독립 — transition_records.machine_id로 참조)
@@ -551,7 +608,7 @@ state_machines (독립 — transition_records.machine_id로 참조)
 | STEP 5 | Evidence Pack + API | 완료 | 증거 봉인 패키지, 해시 검증, 7개 테스트 PASS |
 | STEP 6 | Decision Replay + API | 완료 | TRACE/DETERMINISTIC/FULL 3모드, 정책 drift 분석, 6개 테스트 PASS |
 | STEP 7 | Override Governance | 완료 | 다중 승인, Evidence Pack 자동 생성, KPI 추적, 만료/중복 방지, 8개 테스트 PASS |
-| STEP 8 | Export + Audit Report | 미구현 | |
+| STEP 8 | Export + Audit Report | 완료 | 5가지 보고서, 해시 무결성, DB 저장, 7개 테스트 PASS |
 | STEP 9 | Dashboard UI | 미구현 | |
 | STEP 10 | Deployment | 미구현 | |
 
@@ -594,6 +651,7 @@ npx tsx scripts/test-state-machine.ts      # 10 tests
 npx tsx scripts/test-evidence-pack.ts      # 7 tests
 npx tsx scripts/test-decision-replay.ts    # 6 tests
 npx tsx scripts/test-override-governance.ts # 8 tests
+npx tsx scripts/test-export-audit.ts       # 7 tests
 ```
 
 **데모 스크립트:**
