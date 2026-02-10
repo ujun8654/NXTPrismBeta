@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nxtprism.io/schemas/evidence-pack/v1.0",
+  "title": "NXTPrism Evidence Pack Manifest v1.0",
+  "description": "Evidence Pack manifest.json의 표준 포맷. 감사/보험/규제 제출 가능한 컨테이너.",
+
+  "type": "object",
+  "required": [
+    "pack_version",
+    "decision",
+    "context_refs",
+    "policy",
+    "state_transition",
+    "attestations",
+    "integrity",
+    "retention",
+    "privacy"
+  ],
+  "properties": {
+    "pack_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Evidence Pack 포맷 버전"
+    },
+    "decision": {
+      "$ref": "trust-objects.schema.json#/$defs/Decision"
+    },
+    "context_refs": {
+      "type": "array",
+      "items": { "$ref": "trust-objects.schema.json#/$defs/ContextRef" },
+      "minItems": 1,
+      "description": "결정에 사용된 입력 데이터 참조 목록"
+    },
+    "policy": {
+      "$ref": "trust-objects.schema.json#/$defs/PolicyRef"
+    },
+    "model_runtime": {
+      "$ref": "trust-objects.schema.json#/$defs/ModelRuntimeRef",
+      "description": "AI/ML 모델 런타임 정보 (선택)"
+    },
+    "state_transition": {
+      "$ref": "trust-objects.schema.json#/$defs/StateTransition"
+    },
+    "attestations": {
+      "type": "array",
+      "items": { "$ref": "trust-objects.schema.json#/$defs/Attestation" },
+      "minItems": 1,
+      "description": "승인/서명 목록 (최소 1개 필수)"
+    },
+    "integrity": {
+      "$ref": "trust-objects.schema.json#/$defs/Integrity"
+    },
+    "retention": {
+      "type": "object",
+      "required": ["class", "min_retention_days", "deletion_strategy"],
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["safety_critical", "operational", "general"],
+          "description": "보존 등급"
+        },
+        "min_retention_days": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "최소 보존 기간 (일)"
+        },
+        "deletion_strategy": {
+          "type": "string",
+          "enum": ["CRYPTO_SHREDDING", "TOMBSTONE", "NONE"],
+          "description": "삭제 전략"
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "required": ["pii_class", "data_residency"],
+      "properties": {
+        "pii_class": {
+          "type": "string",
+          "enum": ["PII_NONE", "PII_PRESENT", "PII_MASKED"],
+          "description": "개인정보 포함 여부"
+        },
+        "data_residency": {
+          "type": "string",
+          "description": "데이터 거주 국가 코드 (예: KR, US)"
+        },
+        "masking_applied": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

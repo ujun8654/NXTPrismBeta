@@ -1,0 +1,25 @@
+{
+  "name": "nxtprism",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NXTPrism — Evidence Infrastructure for Safety-Critical AI Operations",
+  "scripts": {
+    "dev": "pnpm --filter prism-api dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "codegen": "node scripts/codegen/generate.js"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.10",
+    "dotenv": "^16.6.1",
+    "tsx": "^4.21.0"
+  }
+}

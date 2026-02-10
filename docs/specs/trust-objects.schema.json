@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nxtprism.io/schemas/trust-objects/v1.0",
+  "title": "NXTPrism Trust Objects v1.0",
+  "description": "결정-증거 데이터 표준. Prism의 핵심 객체 모델을 정의한다.",
+
+  "$defs": {
+    "Decision": {
+      "type": "object",
+      "description": "불변 결정 객체. 어떤 자산에 대해, 어떤 결과가, 왜 내려졌는지를 나타낸다.",
+      "required": ["decision_id", "tenant_id", "occurred_at", "system", "asset_ref", "outcome"],
+      "properties": {
+        "decision_id": { "type": "string", "description": "결정 고유 ID (ULID)" },
+        "tenant_id": { "type": "string", "description": "테넌트 ID" },
+        "occurred_at": { "type": "string", "format": "date-time", "description": "결정 시각 (ISO 8601)" },
+        "system": { "type": "string", "description": "결정을 내린 시스템 (예: maintenance-recommendation)" },
+        "asset_ref": {
+          "type": "object",
+          "required": ["type", "id"],
+          "properties": {
+            "type": { "type": "string", "description": "자산 유형 (예: aircraft, component)" },
+            "id": { "type": "string", "description": "자산 ID" }
+          }
+        },
+        "outcome": {
+          "type": "object",
+          "required": ["type", "value"],
+          "properties": {
+            "type": { "type": "string", "description": "결정 유형 (예: restrict_operation, return_to_service)" },
+            "value": { "type": "string", "description": "결정 값 (예: NO_GO, GO)" }
+          }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "결정 신뢰도 (선택)" },
+        "extensions": { "type": "object", "description": "도메인별 확장 필드" }
+      }
+    },
+
+    "ContextRef": {
+      "type": "object",
+      "description": "입력 데이터의 참조. 원본은 외부에, 해시만 보관.",
+      "required": ["uri", "hash", "hash_alg", "captured_at"],
+      "properties": {
+        "uri": { "type": "string", "format": "uri", "description": "원본 데이터 위치" },
+        "hash": { "type": "string", "description": "원본 데이터의 해시값 (예: sha256:abc...)" },
+        "hash_alg": { "type": "string", "enum": ["SHA-256", "SHA-384", "SHA-512"], "default": "SHA-256" },
+        "captured_at": { "type": "string", "format": "date-time", "description": "데이터 캡처 시각" },
+        "redaction_profile": { "type": "string", "description": "적용된 마스킹 프로파일 (선택)" },
+        "feature_summary_ref": { "type": "string", "description": "피처 요약 참조 (선택)" }
+      }
+    },
+
+    "PolicyRef": {
+      "type": "object",
+      "description": "결정에 적용된 정책의 버전과 평가 결과.",
+      "required": ["policy_id", "policy_version", "engine", "evaluation_result"],
+      "properties": {
+        "policy_id": { "type": "string" },
+        "policy_version": { "type": "string" },
+        "engine": { "type": "string", "description": "평가 엔진 (예: deterministic-policy-engine)" },
+        "evaluation_trace_ref": { "type": "string", "description": "평가 trace 참조 URI" },
+        "evaluation_result": {
+          "type": "object",
+          "required": ["allowed"],
+          "properties": {
+            "allowed": { "type": "boolean" },
+            "reasons": { "type": "array", "items": { "type": "string" } },
+            "score": { "type": "number" }
+          }
+        }
+      }
+    },
+
+    "ModelRuntimeRef": {
+      "type": "object",
+      "description": "결정에 사용된 AI 모델/런타임 정보.",
+      "properties": {
+        "model_ref": {
+          "type": "object",
+          "properties": {
+            "uri": { "type": "string" },
+            "digest": { "type": "string" }
+          }
+        },
+        "preprocess_ref": {
+          "type": "object",
+          "properties": {
+            "git_commit": { "type": "string" },
+            "digest": { "type": "string" }
+          }
+        },
+        "container_image_digest": { "type": "string" },
+        "runtime_versions": { "type": "object", "additionalProperties": { "type": "string" } },
+        "sbom_ref": { "type": "string" }
+      }
+    },
+
+    "StateTransition": {
+      "type": "object",
+      "description": "상태 전이 기록. 어떤 상태머신에서 어떤 전이가 발생했는지.",
+      "required": ["machine_id", "machine_version", "from", "to", "trigger"],
+      "properties": {
+        "machine_id": { "type": "string" },
+        "machine_version": { "type": "string" },
+        "from": { "type": "string", "description": "이전 상태" },
+        "to": { "type": "string", "description": "새 상태" },
+        "trigger": { "type": "string", "description": "전이 트리거 (예: AI_RECOMMENDATION, HUMAN_OVERRIDE)" },
+        "gate_mode": { "type": "string", "enum": ["SHADOW", "SOFT", "HARD"] },
+        "gate_token_id": { "type": "string", "description": "발급된 Gate Token ID (선택)" }
+      }
+    },
+
+    "Attestation": {
+      "type": "object",
+      "description": "승인/서명 기록. 누가 어떤 역할로 무엇을 승인/검증했는지.",
+      "required": ["type", "actor", "role", "auth_context", "signed_at"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ORG_ATTESTATION", "HUMAN_APPROVAL", "HUMAN_OVERRIDE"],
+          "description": "조직 서명 / 개인 승인 / 개인 오버라이드"
+        },
+        "actor": {
+          "type": "object",
+          "required": ["kind", "id"],
+          "properties": {
+            "kind": { "type": "string", "enum": ["service", "human"] },
+            "id": { "type": "string" }
+          }
+        },
+        "role": { "type": "string", "description": "역할 (예: OPERATOR, QA_APPROVER, CERTIFYING_STAFF)" },
+        "auth_context": {
+          "type": "object",
+          "properties": {
+            "method": { "type": "string", "description": "인증 방식 (예: KMS_HSM, OIDC)" },
+            "idp": { "type": "string" },
+            "mfa": { "type": "boolean" },
+            "key_id": { "type": "string" }
+          }
+        },
+        "signed_at": { "type": "string", "format": "date-time" },
+        "signature_ref": { "type": "string", "description": "서명 파일 참조" },
+        "reason": { "type": "string", "description": "오버라이드 사유 (HUMAN_OVERRIDE 시 필수)" }
+      }
+    },
+
+    "Integrity": {
+      "type": "object",
+      "description": "해시 체인 무결성 정보.",
+      "required": ["prev_hash", "chain_hash"],
+      "properties": {
+        "prev_hash": { "type": "string", "description": "이전 증거의 chain_hash" },
+        "chain_hash": { "type": "string", "description": "현재 증거의 체인 해시" },
+        "checkpoint_ref": { "type": "string", "description": "관련 Merkle 체크포인트 ID" },
+        "external_anchor_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "외부 앵커 참조 목록"
+        }
+      }
+    }
+  }
+}

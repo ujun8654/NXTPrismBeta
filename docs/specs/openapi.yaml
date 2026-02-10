@@ -1,0 +1,409 @@
+openapi: 3.1.0
+info:
+  title: NXTPrism API
+  version: 1.0.0
+  description: |
+    NXTPrism — Evidence Infrastructure for Safety-Critical AI Operations.
+    결정-증거-강제 플랫폼의 REST API 명세.
+
+servers:
+  - url: http://localhost:3000/v1
+    description: Local development
+
+paths:
+  # === Ingest ===
+  /events:ingest:
+    post:
+      operationId: ingestEvent
+      summary: 이벤트 수집
+      description: 외부 시스템에서 발생한 이벤트를 수집하여 Trust Object로 변환
+      tags: [Ingest]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestEventRequest'
+      responses:
+        '201':
+          description: 이벤트 수집 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestEventResponse'
+
+  /evidence:create:
+    post:
+      operationId: createEvidence
+      summary: 증거 생성
+      description: 해시체인에 새 증거를 추가
+      tags: [Ingest]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEvidenceRequest'
+      responses:
+        '201':
+          description: 증거 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceRecord'
+
+  /attestations:create:
+    post:
+      operationId: createAttestation
+      summary: 승인/서명 생성
+      tags: [Ingest]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAttestationRequest'
+      responses:
+        '201':
+          description: 승인 생성 성공
+
+  # === Query ===
+  /evidence/{evidence_id}:
+    get:
+      operationId: getEvidence
+      summary: 증거 조회
+      tags: [Query]
+      parameters:
+        - name: evidence_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 증거 상세
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceRecord'
+
+  /chains/{tenant_id}/head:
+    get:
+      operationId: getChainHead
+      summary: 체인 헤드 조회
+      description: 테넌트의 최신 증거 해시 조회
+      tags: [Query]
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 체인 헤드 정보
+
+  /decisions/{decision_id}/evidence-pack:
+    get:
+      operationId: getEvidencePack
+      summary: Evidence Pack 조회
+      tags: [Query]
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Evidence Pack 상세
+
+  # === Replay ===
+  /decisions/{decision_id}:replay:
+    post:
+      operationId: replayDecision
+      summary: 결정 재현
+      description: 과거 결정을 당시 정책/입력으로 재평가
+      tags: [Replay]
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplayRequest'
+      responses:
+        '200':
+          description: 재현 결과
+
+  # === State Transition & Gate ===
+  /state-machines/{machine_id}/transitions:authorize:
+    post:
+      operationId: authorizeTransition
+      summary: Gate Token 발급
+      description: 상태 전이를 위한 Gate Token 발급 요청
+      tags: [Gate]
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeTransitionRequest'
+      responses:
+        '200':
+          description: Gate Token 발급 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GateToken'
+        '403':
+          description: 전이 거부 (증거/승인 부족)
+
+  /state-machines/{machine_id}/transitions:commit:
+    post:
+      operationId: commitTransition
+      summary: 전이 커밋
+      description: Gate Token으로 상태 전이를 실행
+      tags: [Gate]
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommitTransitionRequest'
+      responses:
+        '200':
+          description: 전이 완료 + Evidence Pack 생성
+
+  # === Override ===
+  /overrides:create:
+    post:
+      operationId: createOverride
+      summary: Break-glass 요청
+      description: 긴급 예외 전이 요청 (Override Evidence Pack 자동 생성)
+      tags: [Gate]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOverrideRequest'
+      responses:
+        '200':
+          description: Override 승인 + Evidence Pack 생성
+
+  # === Export ===
+  /exports:audit-pack:
+    post:
+      operationId: exportAuditPack
+      summary: 감사 팩 내보내기
+      description: Evidence Pack을 ZIP 파일로 내보내기
+      tags: [Export]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportAuditPackRequest'
+      responses:
+        '200':
+          description: ZIP 파일
+
+  /evidence-packs:verify:
+    post:
+      operationId: verifyEvidencePack
+      summary: Evidence Pack 검증
+      description: 서버측에서 Evidence Pack 무결성 검증
+      tags: [Export]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                pack:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: 검증 리포트
+
+  # === Admin ===
+  /tenants:create:
+    post:
+      operationId: createTenant
+      summary: 테넌트 생성
+      tags: [Admin]
+      responses:
+        '201':
+          description: 테넌트 생성 성공
+
+  /policies:publish:
+    post:
+      operationId: publishPolicy
+      summary: 정책 배포
+      description: 새 정책 버전을 배포 (이전 버전은 불변 보존)
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishPolicyRequest'
+      responses:
+        '201':
+          description: 정책 배포 성공
+
+components:
+  schemas:
+    IngestEventRequest:
+      type: object
+      required: [event_type, asset_ref, source_system, idempotency_key]
+      properties:
+        event_type:
+          type: string
+        asset_ref:
+          type: object
+          properties:
+            type: { type: string }
+            id: { type: string }
+        source_system:
+          type: string
+        idempotency_key:
+          type: string
+          description: 멱등성 키 (중복 방지)
+        context_refs:
+          type: array
+          items: { type: object }
+        result_summary:
+          type: object
+        model_ref:
+          type: object
+
+    IngestEventResponse:
+      type: object
+      properties:
+        event_id: { type: string }
+        evidence_id: { type: string }
+        chain_hash: { type: string }
+
+    CreateEvidenceRequest:
+      type: object
+      required: [tenant_id, payload]
+      properties:
+        tenant_id: { type: string }
+        payload: { type: object }
+        decision_id: { type: string }
+        policy_version_id: { type: string }
+
+    EvidenceRecord:
+      type: object
+      properties:
+        evidence_id: { type: string }
+        tenant_id: { type: string }
+        prev_hash: { type: string }
+        payload_hash: { type: string }
+        chain_hash: { type: string }
+        created_at: { type: string, format: date-time }
+
+    CreateAttestationRequest:
+      type: object
+      required: [type, actor, role, decision_id]
+      properties:
+        type: { type: string, enum: [ORG_ATTESTATION, HUMAN_APPROVAL, HUMAN_OVERRIDE] }
+        actor: { type: object }
+        role: { type: string }
+        decision_id: { type: string }
+        reason: { type: string }
+
+    AuthorizeTransitionRequest:
+      type: object
+      required: [tenant_id, asset_ref, from, to]
+      properties:
+        tenant_id: { type: string }
+        asset_ref: { type: object }
+        from: { type: string }
+        to: { type: string }
+        decision_id: { type: string }
+        evidence_ids: { type: array, items: { type: string } }
+        attestation_ids: { type: array, items: { type: string } }
+
+    GateToken:
+      type: object
+      properties:
+        token: { type: string, description: 서명된 JWT Gate Token }
+        gate_token_id: { type: string }
+        expires_at: { type: string, format: date-time }
+
+    CommitTransitionRequest:
+      type: object
+      required: [gate_token]
+      properties:
+        gate_token: { type: string }
+
+    CreateOverrideRequest:
+      type: object
+      required: [tenant_id, asset_ref, from, to, reason_code, requestor, approvers]
+      properties:
+        tenant_id: { type: string }
+        asset_ref: { type: object }
+        from: { type: string }
+        to: { type: string }
+        reason_code: { type: string }
+        reason_text: { type: string }
+        requestor: { type: string }
+        approvers: { type: array, items: { type: string }, minItems: 2 }
+
+    ReplayRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [TRACE, DETERMINISTIC, FULL]
+          default: TRACE
+        compare_with_current:
+          type: boolean
+          default: false
+
+    ExportAuditPackRequest:
+      type: object
+      required: [decision_id]
+      properties:
+        decision_id: { type: string }
+        format: { type: string, enum: [ZIP, JSON], default: ZIP }
+        redaction_profile: { type: string }
+
+    PublishPolicyRequest:
+      type: object
+      required: [policy_id, version, name, rules]
+      properties:
+        policy_id: { type: string }
+        version: { type: string }
+        name: { type: string }
+        rules: { type: array, items: { type: object } }
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

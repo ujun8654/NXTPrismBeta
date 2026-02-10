@@ -1,0 +1,20 @@
+{
+  "name": "@nxtprism/evidence-pack",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "@nxtprism/core-trust": "workspace:*",
+    "@nxtprism/evidence-ledger": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
