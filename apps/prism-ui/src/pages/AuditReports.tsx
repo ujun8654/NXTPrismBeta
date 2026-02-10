@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import JsonViewer from '../components/JsonViewer';
+import { useI18n } from '../i18n';
 import {
   generateAuditReport, generateChainAudit, generateComplianceSnapshot, generateOverrideHistory,
   getExportList, getExportDetail,
 } from '../api';
 
 const REPORT_ACTIONS = [
-  { key: 'AUDIT_REPORT', label: 'Audit Report', desc: 'Full system audit', fn: generateAuditReport },
-  { key: 'CHAIN_AUDIT', label: 'Chain Audit', desc: 'Hash chain integrity', fn: generateChainAudit },
-  { key: 'COMPLIANCE', label: 'Compliance', desc: 'Compliance snapshot', fn: generateComplianceSnapshot },
-  { key: 'OVERRIDE', label: 'Override History', desc: 'Override records', fn: generateOverrideHistory },
+  { key: 'AUDIT_REPORT', fn: generateAuditReport },
+  { key: 'CHAIN_AUDIT', fn: generateChainAudit },
+  { key: 'COMPLIANCE', fn: generateComplianceSnapshot },
+  { key: 'OVERRIDE', fn: generateOverrideHistory },
 ];
 
 export default function AuditReports() {
+  const { t } = useI18n();
   const [exports, setExports] = useState<any[]>([]);
   const [selected, setSelected] = useState<any>(null);
   const [generating, setGenerating] = useState<string | null>(null);
@@ -45,10 +47,11 @@ export default function AuditReports() {
   return (
     <div className="space-y-5 max-w-5xl">
       <div>
-        <h2 className="text-lg font-semibold text-white">Audit Reports</h2>
-        <p className="text-xs text-neutral-500 mt-0.5">Generate and view audit reports</p>
+        <h2 className="text-lg font-semibold text-white">{t('report.title')}</h2>
+        <p className="text-xs text-neutral-500 mt-0.5">{t('report.desc')}</p>
       </div>
 
+      {/* Report Generation Buttons */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {REPORT_ACTIONS.map((action) => (
           <button
@@ -57,60 +60,77 @@ export default function AuditReports() {
             disabled={generating !== null}
             className="bg-neutral-900/50 border border-neutral-800 hover:border-neutral-600 rounded-lg p-4 text-left transition-colors disabled:opacity-50"
           >
-            <div className="text-xs font-medium text-neutral-200">{action.label}</div>
-            <div className="text-[11px] text-neutral-500 mt-0.5">{action.desc}</div>
-            {generating === action.key && <div className="text-[11px] text-neutral-400 mt-2">Generating...</div>}
+            <div className="text-xs font-medium text-neutral-200">{t(`report.${action.key}`)}</div>
+            <div className="text-[11px] text-neutral-500 mt-0.5">{t(`report.${action.key}.desc`)}</div>
+            {generating === action.key && <div className="text-[11px] text-neutral-400 mt-2">{t('common.generating')}</div>}
           </button>
         ))}
       </div>
 
+      {/* Result */}
       {result && (
         <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
-            <h3 className="text-xs font-medium text-neutral-400">Result</h3>
-            <StatusBadge variant={result.error ? 'error' : 'ok'} label={result.error ? 'FAILED' : 'SUCCESS'} />
+            <h3 className="text-xs font-medium text-neutral-400">{t('report.result')}</h3>
+            <StatusBadge variant={result.error ? 'error' : 'ok'} label={result.error ? t('common.failed') : t('common.success')} />
           </div>
           {result.error ? (
             <p className="text-red-400 text-xs">{result.error}</p>
           ) : (
-            <JsonViewer data={result.data} defaultExpanded />
+            <div className="space-y-3">
+              {/* Human-readable summary */}
+              <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg text-[11px] space-y-1.5">
+                <p className="text-emerald-400">{t('report.generatedSuccess')}</p>
+                {result.data?.export_id && (
+                  <div><span className="text-neutral-500">{t('report.exportId')}: </span><span className="text-neutral-300 font-mono">{result.data.export_id.slice(0, 16)}...</span></div>
+                )}
+                {result.data?.report_hash && (
+                  <div><span className="text-neutral-500">{t('report.hash')}: </span><span className="text-neutral-300 font-mono">{result.data.report_hash.slice(0, 24)}...</span></div>
+                )}
+                {result.data?.export_type && (
+                  <div><span className="text-neutral-500">{t('report.reportType')}: </span><span className="text-neutral-300">{t(`report.${result.data.export_type}`) !== `report.${result.data.export_type}` ? t(`report.${result.data.export_type}`) : result.data.export_type}</span></div>
+                )}
+              </div>
+              <JsonViewer data={result.data} title={t('common.showJson')} />
+            </div>
           )}
         </div>
       )}
 
+      {/* Export History */}
       <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg">
         <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
-          <h3 className="text-xs font-medium text-neutral-400">Export History ({exports.length})</h3>
-          <button onClick={loadExports} className="text-[11px] text-neutral-500 hover:text-neutral-300">Refresh</button>
+          <h3 className="text-xs font-medium text-neutral-400">{t('report.exportHistory')} ({exports.length})</h3>
+          <button onClick={loadExports} className="text-[11px] text-neutral-500 hover:text-neutral-300">{t('common.refresh')}</button>
         </div>
 
         {loading ? (
-          <div className="p-4 text-neutral-500 text-xs">Loading...</div>
+          <div className="p-4 text-neutral-500 text-xs">{t('common.loading')}</div>
         ) : (
           <table className="w-full text-xs">
             <thead>
               <tr className="text-[11px] text-neutral-500 border-b border-neutral-800/50">
-                <th className="text-left px-4 py-2 font-medium">Type</th>
-                <th className="text-left px-4 py-2 font-medium">Export ID</th>
-                <th className="text-left px-4 py-2 font-medium">Hash</th>
-                <th className="text-left px-4 py-2 font-medium">By</th>
-                <th className="text-left px-4 py-2 font-medium">Created</th>
+                <th className="text-left px-4 py-2 font-medium">{t('common.type')}</th>
+                <th className="text-left px-4 py-2 font-medium">{t('report.exportId')}</th>
+                <th className="text-left px-4 py-2 font-medium">{t('report.hash')}</th>
+                <th className="text-left px-4 py-2 font-medium">{t('common.by')}</th>
+                <th className="text-left px-4 py-2 font-medium">{t('common.createdAt')}</th>
                 <th className="text-left px-4 py-2 font-medium"></th>
               </tr>
             </thead>
             <tbody>
               {exports.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-neutral-600">No exports yet</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-neutral-600">{t('report.noExports')}</td></tr>
               ) : (
                 exports.map((ex: any) => (
                   <tr key={ex.export_id} className="border-b border-neutral-800/30 hover:bg-white/[0.02]">
-                    <td className="px-4 py-2"><StatusBadge variant="info" label={ex.export_type} /></td>
+                    <td className="px-4 py-2"><StatusBadge variant="info" label={t(`report.${ex.export_type}`) !== `report.${ex.export_type}` ? t(`report.${ex.export_type}`) : ex.export_type} /></td>
                     <td className="px-4 py-2 text-neutral-500 font-mono">{ex.export_id?.slice(0, 8)}...</td>
                     <td className="px-4 py-2 text-neutral-600 font-mono">{ex.report_hash?.slice(0, 12)}...</td>
                     <td className="px-4 py-2 text-neutral-400">{ex.requested_by}</td>
                     <td className="px-4 py-2 text-neutral-500">{new Date(ex.created_at).toLocaleString('ko-KR')}</td>
                     <td className="px-4 py-2">
-                      <button onClick={() => handleViewDetail(ex.export_id)} className="text-[11px] text-neutral-400 hover:text-white">View</button>
+                      <button onClick={() => handleViewDetail(ex.export_id)} className="text-[11px] text-neutral-400 hover:text-white">{t('common.view')}</button>
                     </td>
                   </tr>
                 ))
@@ -120,18 +140,36 @@ export default function AuditReports() {
         )}
       </div>
 
+      {/* Detail Panel */}
       {selected && (
         <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-medium text-neutral-400">Detail - {(selected as any).export_id?.slice(0, 8)}...</h3>
-            <button onClick={() => setSelected(null)} className="text-[11px] text-neutral-500 hover:text-neutral-300">Close</button>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs font-medium text-neutral-400">{t('report.detailTitle')}</h3>
+            <button onClick={() => setSelected(null)} className="text-[11px] text-neutral-500 hover:text-neutral-300">{t('common.close')}</button>
           </div>
-          <div className="grid grid-cols-3 gap-4 mb-3 text-[11px]">
-            <div><span className="text-neutral-500">Type: </span><span className="text-neutral-300">{(selected as any).export_type}</span></div>
-            <div><span className="text-neutral-500">Hash: </span><span className="text-neutral-300 font-mono">{(selected as any).report_hash?.slice(0, 24)}...</span></div>
-            <div><span className="text-neutral-500">Created: </span><span className="text-neutral-300">{new Date((selected as any).created_at).toLocaleString('ko-KR')}</span></div>
+
+          {/* Human-readable summary */}
+          <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-1.5 text-[11px] mb-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <span className="text-neutral-500 block">{t('report.reportType')}</span>
+                <span className="text-neutral-200">{t(`report.${(selected as any).export_type}`) !== `report.${(selected as any).export_type}` ? t(`report.${(selected as any).export_type}`) : (selected as any).export_type}</span>
+              </div>
+              <div>
+                <span className="text-neutral-500 block">{t('report.hash')}</span>
+                <span className="text-neutral-200 font-mono">{(selected as any).report_hash?.slice(0, 24)}...</span>
+              </div>
+              <div>
+                <span className="text-neutral-500 block">{t('common.createdAt')}</span>
+                <span className="text-neutral-200">{new Date((selected as any).created_at).toLocaleString('ko-KR')}</span>
+              </div>
+            </div>
           </div>
-          <JsonViewer data={(selected as any).report} title="Report Content" defaultExpanded />
+
+          <JsonViewer data={(selected as any).report} title={t('report.content')} />
+          <div className="mt-2">
+            <JsonViewer data={selected} title={t('common.showJson')} />
+          </div>
         </div>
       )}
     </div>

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import JsonViewer from '../components/JsonViewer';
+import { useI18n } from '../i18n';
 import { getChainHead, verifyChain, createCheckpoint, getEvidence } from '../api';
 
 export default function EvidenceChain() {
+  const { t } = useI18n();
   const [head, setHead] = useState<any>(null);
   const [verifyResult, setVerifyResult] = useState<any>(null);
   const [checkpointResult, setCheckpointResult] = useState<any>(null);
@@ -42,66 +44,117 @@ export default function EvidenceChain() {
   return (
     <div className="space-y-5 max-w-4xl">
       <div>
-        <h2 className="text-lg font-semibold text-white">Evidence Chain</h2>
-        <p className="text-xs text-neutral-500 mt-0.5">Hash chain integrity and evidence records</p>
+        <h2 className="text-lg font-semibold text-white">{t('evidence.title')}</h2>
+        <p className="text-xs text-neutral-500 mt-0.5">{t('evidence.desc')}</p>
       </div>
 
-      <Section title="Chain Head">
+      {/* Chain Head */}
+      <Section title={t('evidence.chainHead')}>
         {loading ? (
-          <p className="text-neutral-500 text-xs">Loading...</p>
+          <p className="text-neutral-500 text-xs">{t('common.loading')}</p>
         ) : head ? (
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <InfoRow label="Sequence #" value={head.sequence_num} />
-            <InfoRow label="Evidence ID" value={head.evidence_id?.slice(0, 16) + '...'} />
-            <InfoRow label="Chain Hash" value={head.chain_hash?.slice(0, 24) + '...'} mono />
-            <InfoRow label="Created At" value={new Date(head.created_at).toLocaleString('ko-KR')} />
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <InfoRow label={t('evidence.seqNum')} value={head.sequence_num} />
+              <InfoRow label={t('evidence.evidenceId')} value={head.evidence_id?.slice(0, 16) + '...'} />
+              <InfoRow label={t('evidence.chainHash')} value={head.chain_hash?.slice(0, 24) + '...'} mono />
+              <InfoRow label={t('common.createdAt')} value={new Date(head.created_at).toLocaleString('ko-KR')} />
+            </div>
+            <JsonViewer data={head} title={t('common.showJson')} />
           </div>
         ) : (
-          <p className="text-neutral-600 text-xs">No evidence records yet</p>
+          <p className="text-neutral-600 text-xs">{t('evidence.noRecords')}</p>
         )}
       </Section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Section title="Chain Verification">
-          <Btn onClick={handleVerify} loading={actionLoading === 'verify'} label="Verify Chain" />
+        {/* Verify */}
+        <Section title={t('evidence.verifyTitle')}>
+          <p className="text-[11px] text-neutral-500 mb-3">{t('evidence.verifyDesc')}</p>
+          <Btn onClick={handleVerify} loading={actionLoading === 'verify'} label={t('evidence.verify')} loadingLabel={t('common.processing')} />
           {verifyResult && (
-            <div className="mt-3 space-y-2">
-              {verifyResult.valid !== undefined && (
-                <StatusBadge
-                  variant={verifyResult.valid ? 'ok' : 'error'}
-                  label={verifyResult.valid ? `VALID - ${verifyResult.records_checked} records` : `INVALID at seq ${verifyResult.first_invalid_at}`}
-                />
+            <div className="mt-3 space-y-3">
+              {verifyResult.error ? (
+                <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-lg text-red-400 text-xs">{verifyResult.error}</div>
+              ) : (
+                <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-2">
+                  <div className="flex items-center gap-2">
+                    <StatusBadge
+                      variant={verifyResult.valid ? 'ok' : 'error'}
+                      label={verifyResult.valid ? t('evidence.verifyValid') : t('evidence.verifyInvalid')}
+                    />
+                  </div>
+                  {verifyResult.valid && (
+                    <p className="text-[11px] text-neutral-400">{verifyResult.records_checked} {t('evidence.recordsChecked')}</p>
+                  )}
+                  {!verifyResult.valid && verifyResult.first_invalid_at != null && (
+                    <p className="text-[11px] text-red-400">{t('evidence.invalidAt')} #{verifyResult.first_invalid_at}</p>
+                  )}
+                </div>
               )}
-              <JsonViewer data={verifyResult} title="Result JSON" />
+              <JsonViewer data={verifyResult} title={t('common.showJson')} />
             </div>
           )}
         </Section>
 
-        <Section title="Merkle Checkpoint">
-          <Btn onClick={handleCheckpoint} loading={actionLoading === 'checkpoint'} label="Create Checkpoint" />
+        {/* Checkpoint */}
+        <Section title={t('evidence.checkpointTitle')}>
+          <p className="text-[11px] text-neutral-500 mb-3">{t('evidence.checkpointDesc')}</p>
+          <Btn onClick={handleCheckpoint} loading={actionLoading === 'checkpoint'} label={t('evidence.checkpoint')} loadingLabel={t('common.processing')} />
           {checkpointResult && (
-            <div className="mt-3">
-              <JsonViewer data={checkpointResult} title="Checkpoint JSON" />
+            <div className="mt-3 space-y-3">
+              {checkpointResult.error ? (
+                <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg text-amber-400 text-xs">
+                  {checkpointResult.error.includes('새 증거가 없습니다') || checkpointResult.error.includes('No new')
+                    ? t('evidence.noNewRecords')
+                    : checkpointResult.error}
+                </div>
+              ) : (
+                <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-2">
+                  <StatusBadge variant="ok" label={t('evidence.checkpointCreated')} />
+                  <div className="grid grid-cols-1 gap-1.5 text-[11px] mt-2">
+                    <div><span className="text-neutral-500">{t('evidence.merkleRoot')}: </span><span className="text-neutral-300 font-mono">{checkpointResult.merkle_root?.slice(0, 32)}...</span></div>
+                    <div><span className="text-neutral-500">{t('evidence.sealedRange')}: </span><span className="text-neutral-300">#{checkpointResult.sequence_from} ~ #{checkpointResult.sequence_to}</span></div>
+                    <div><span className="text-neutral-500">{checkpointResult.record_count} {t('evidence.recordCount')}</span></div>
+                  </div>
+                </div>
+              )}
+              {!checkpointResult.error && <JsonViewer data={checkpointResult} title={t('common.showJson')} />}
             </div>
           )}
         </Section>
       </div>
 
-      <Section title="Evidence Lookup">
+      {/* Evidence Lookup */}
+      <Section title={t('evidence.lookup')}>
+        <p className="text-[11px] text-neutral-500 mb-3">{t('evidence.lookupDesc')}</p>
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder="Enter evidence_id..."
+            placeholder={t('evidence.lookupPlaceholder')}
             value={evidenceLookup}
             onChange={(e) => setEvidenceLookup(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
             className="flex-1 px-3 py-2 bg-neutral-950 border border-neutral-700 rounded-md text-xs text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
           />
-          <Btn onClick={handleLookup} loading={actionLoading === 'lookup'} label="Search" />
+          <Btn onClick={handleLookup} loading={actionLoading === 'lookup'} label={t('common.search')} loadingLabel={t('common.processing')} />
         </div>
         {evidenceResult && (
-          <div className="mt-3">
-            <JsonViewer data={evidenceResult} title="Evidence Record" defaultExpanded />
+          <div className="mt-3 space-y-3">
+            {evidenceResult.error ? (
+              <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-lg text-red-400 text-xs">{evidenceResult.error}</div>
+            ) : (
+              <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-2">
+                <div className="grid grid-cols-2 gap-3 text-[11px]">
+                  <InfoRow label={t('evidence.evidenceId')} value={evidenceResult.evidence_id?.slice(0, 16) + '...'} />
+                  <InfoRow label={t('evidence.eventType')} value={evidenceResult.payload?.event_type || evidenceResult.event_type || '-'} />
+                  <InfoRow label={t('evidence.seqNum')} value={evidenceResult.sequence_num} />
+                  <InfoRow label={t('common.createdAt')} value={new Date(evidenceResult.created_at).toLocaleString('ko-KR')} />
+                  <InfoRow label={t('evidence.chainHash')} value={(evidenceResult.chain_hash?.slice(0, 24) || '-') + '...'} mono />
+                </div>
+              </div>
+            )}
+            <JsonViewer data={evidenceResult} title={t('common.showJson')} />
           </div>
         )}
       </Section>
@@ -127,14 +180,14 @@ function InfoRow({ label, value, mono }: { label: string; value: string | number
   );
 }
 
-function Btn({ onClick, loading, label }: { onClick: () => void; loading: boolean; label: string }) {
+function Btn({ onClick, loading, label, loadingLabel }: { onClick: () => void; loading: boolean; label: string; loadingLabel: string }) {
   return (
     <button
       onClick={onClick}
       disabled={loading}
       className="px-3 py-2 text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-md transition-colors disabled:opacity-50"
     >
-      {loading ? 'Processing...' : label}
+      {loading ? loadingLabel : label}
     </button>
   );
 }

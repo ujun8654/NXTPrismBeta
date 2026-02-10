@@ -28,8 +28,11 @@ export function registerChainRoutes(app: FastifyInstance, ledger: EvidenceLedger
   app.post('/v1/chains/:tenant_id/checkpoint', async (request, reply) => {
     const { tenant_id } = request.params as { tenant_id: string };
 
-    const checkpoint = await ledger.createCheckpoint(tenant_id);
-
-    return reply.status(201).send(checkpoint);
+    try {
+      const checkpoint = await ledger.createCheckpoint(tenant_id);
+      return reply.status(201).send(checkpoint);
+    } catch (e: any) {
+      return reply.status(400).send({ error: e.message });
+    }
   });
 }
