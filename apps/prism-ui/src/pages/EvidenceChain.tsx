@@ -44,7 +44,7 @@ export default function EvidenceChain() {
   return (
     <div className="space-y-5 max-w-4xl">
       <div>
-        <h2 className="text-lg font-semibold text-white">{t('evidence.title')}</h2>
+        <h2 className="text-lg font-semibold text-atc-white">{t('evidence.title')}</h2>
         <p className="text-xs text-neutral-500 mt-0.5">{t('evidence.desc')}</p>
       </div>
 
@@ -75,7 +75,7 @@ export default function EvidenceChain() {
           {verifyResult && (
             <div className="mt-3 space-y-3">
               {verifyResult.error ? (
-                <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-lg text-red-400 text-xs">{verifyResult.error}</div>
+                <div className="p-3 bg-[#FF1320]/5 border border-[#FF1320]/20 rounded-lg text-atc-red text-xs">{verifyResult.error}</div>
               ) : (
                 <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-2">
                   <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export default function EvidenceChain() {
                     <p className="text-[11px] text-neutral-400">{verifyResult.records_checked} {t('evidence.recordsChecked')}</p>
                   )}
                   {!verifyResult.valid && verifyResult.first_invalid_at != null && (
-                    <p className="text-[11px] text-red-400">{t('evidence.invalidAt')} #{verifyResult.first_invalid_at}</p>
+                    <p className="text-[11px] text-atc-red">{t('evidence.invalidAt')} #{verifyResult.first_invalid_at}</p>
                   )}
                 </div>
               )}
@@ -104,7 +104,7 @@ export default function EvidenceChain() {
           {checkpointResult && (
             <div className="mt-3 space-y-3">
               {checkpointResult.error ? (
-                <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg text-amber-400 text-xs">
+                <div className="p-3 bg-[#FE930D]/5 border border-[#FE930D]/20 rounded-lg text-atc-orange text-xs">
                   {checkpointResult.error.includes('새 증거가 없습니다') || checkpointResult.error.includes('No new')
                     ? t('evidence.noNewRecords')
                     : checkpointResult.error}
@@ -142,7 +142,7 @@ export default function EvidenceChain() {
         {evidenceResult && (
           <div className="mt-3 space-y-3">
             {evidenceResult.error ? (
-              <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-lg text-red-400 text-xs">{evidenceResult.error}</div>
+              <div className="p-3 bg-[#FF1320]/5 border border-[#FF1320]/20 rounded-lg text-atc-red text-xs">{evidenceResult.error}</div>
             ) : (
               <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-2">
                 <div className="grid grid-cols-2 gap-3 text-[11px]">

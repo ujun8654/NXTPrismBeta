@@ -22,7 +22,7 @@ export default function JsonViewer({ data, title, defaultExpanded = false }: Pro
         </button>
       )}
       {(expanded || !title) && (
-        <pre className="p-4 text-[11px] leading-relaxed text-neutral-400 font-mono bg-neutral-950 overflow-x-auto max-h-96">
+        <pre className="p-4 text-[11px] leading-relaxed text-neutral-400 font-mono bg-atc-black overflow-x-auto max-h-96">
           {json}
         </pre>
       )}

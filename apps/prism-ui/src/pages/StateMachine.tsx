@@ -57,7 +57,7 @@ export default function StateMachine() {
   return (
     <div className="space-y-5 max-w-5xl">
       <div>
-        <h2 className="text-lg font-semibold text-white">{t('state.title')}</h2>
+        <h2 className="text-lg font-semibold text-atc-white">{t('state.title')}</h2>
         <p className="text-xs text-neutral-500 mt-0.5">{t('state.desc')}</p>
       </div>
 
@@ -89,7 +89,7 @@ export default function StateMachine() {
         </div>
       </div>
 
-      {error && <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-lg text-red-400 text-xs">{error}</div>}
+      {error && <div className="p-3 bg-[#FF1320]/5 border border-[#FF1320]/20 rounded-lg text-atc-red text-xs">{error}</div>}
 
       {/* Current State */}
       {currentState && (
@@ -111,7 +111,7 @@ export default function StateMachine() {
               <div key={s} className="flex items-center gap-1.5">
                 <div className={`px-2.5 py-1 rounded-md text-[11px] font-medium ${
                   currentState.current_state === s
-                    ? 'bg-white/10 text-white border border-neutral-500'
+                    ? 'bg-white/10 text-atc-white border border-neutral-500'
                     : 'bg-neutral-900 text-neutral-600 border border-neutral-800'
                 }`}>
                   {ts(s)}

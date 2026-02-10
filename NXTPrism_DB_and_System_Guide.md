@@ -580,7 +580,7 @@ React 18 + Vite + Tailwind CSS 기반의 ATC 터미널 스타일 대시보드.
 | Audit Reports | `/reports` | 5가지 보고서 생성 버튼, 내보내기 목록, JSON 뷰어 |
 
 **기술 스택:** React 18, Vite 5, Tailwind CSS 3, React Router 6
-**디자인:** 다크 테마 (bg-gray-950) + phospho green (text-green-400) + JetBrains Mono
+**디자인:** FAA HF-STD-010A 기반 ATC 다크 테마 + CVD 3중 부호화 (§9 참조)
 
 ---
 
@@ -685,3 +685,61 @@ npx tsx scripts/integrated-demo.ts         # 전체 엔진 통합 시나리오
 npx tsx scripts/tamper-detection-demo.ts   # 변조 탐지 데모
 npx tsx scripts/verify-chain.ts            # 체인 무결성 검증
 ```
+
+---
+
+## 9. UI 디자인 시스템 (FAA HF-STD-010A)
+
+대시보드 색상 체계는 **FAA HF-STD-010A** (항공관제 화면 표준)에 기반한다.
+CVD(색각 이상) 접근성을 위해 **색상 + 아이콘 + 텍스트** 3중 부호화를 적용한다.
+
+### 9.1 컬러 팔레트
+
+**전경 (Foreground)**
+
+| 토큰 | Hex | 용도 |
+|------|-----|------|
+| `atc-white` | `#FFFFFF` | 기본 텍스트, 제목 |
+| `atc-gray` | `#B3B3B3` | 보조 텍스트, 비활성 |
+| `atc-blue` | `#5E8DF6` | 정보 (INFO) |
+| `atc-aqua` | `#07CDED` | 보조 정보, 하이라이트 |
+| `atc-green` | `#23E162` | 안전, 정상 (OK) |
+| `atc-yellow` | `#DFF334` | 주의 (CAUTION) |
+| `atc-orange` | `#FE930D` | 경고 (WARNING) |
+| `atc-red` | `#FF1320` | 위험 (DANGER) |
+| `atc-magenta` | `#D822FF` | 특수 강조 |
+| `atc-pink` | `#F684D8` | 보조 강조 |
+| `atc-brown` | `#C5955B` | 지형/보조 |
+
+**배경 (Background)**
+
+| 토큰 | Hex | 용도 |
+|------|-----|------|
+| `atc-black` | `#000000` | 메인 배경 |
+| `atc-wx-green` | `#173928` | 날씨(Green) 배경 |
+| `atc-wx-yellow` | `#5A4A14` | 날씨(Yellow) 배경 |
+| `atc-wx-red` | `#5D2E59` | 날씨(Red) 배경 |
+
+### 9.2 상태 뱃지 (StatusBadge)
+
+CVD 접근성을 위해 각 상태에 고유 아이콘을 부여한다:
+
+| 상태 | 색상 | 아이콘 | 의미 |
+|------|------|--------|------|
+| ok | `#23E162` (Green) | ✓ | 정상, 성공 |
+| error | `#FF1320` (Red) | ✕ | 오류, 위험 |
+| warn | `#FE930D` (Orange) | △ | 경고, 주의 |
+| info | `#5E8DF6` (Blue) | ● | 정보 |
+| neutral | `#B3B3B3` (Gray) | — | 비활성, 만료 |
+
+### 9.3 Tailwind 설정
+
+커스텀 토큰은 `tailwind.config.js`의 `theme.extend.colors.atc`에 정의되어 있다.
+사용 예: `text-atc-white`, `bg-atc-black`, `text-atc-red`, `border-atc-blue`
+
+### 9.4 접근성 원칙 (ISO 9241-210, ANSI Z535)
+
+1. **색상만으로 의미 전달 금지** — 반드시 아이콘+텍스트 병행
+2. **고대비** — True black (#000) 배경 + 고명도 전경색
+3. **3중 부호화** — Color + Icon + Label로 상태 표현
+4. **일관성** — 전 페이지 동일한 색상 의미 유지

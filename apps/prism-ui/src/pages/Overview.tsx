@@ -42,7 +42,7 @@ export default function Overview() {
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-white">{t('overview.title')}</h2>
+          <h2 className="text-lg font-semibold text-atc-white">{t('overview.title')}</h2>
           <p className="text-xs text-neutral-500 mt-0.5">{t('overview.desc')}</p>
         </div>
         <button onClick={loadAll} className="px-3 py-1.5 text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-md transition-colors">
@@ -51,7 +51,7 @@ export default function Overview() {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-lg text-red-400 text-xs">
+        <div className="p-3 bg-[#FF1320]/5 border border-[#FF1320]/20 rounded-lg text-atc-red text-xs">
           {t('overview.apiConnFailed')}: {error}
         </div>
       )}
@@ -86,7 +86,7 @@ export default function Overview() {
             <Card title={t('overview.overrideSummary')}>
               {kpis ? (
                 <>
-                  <div className="text-2xl font-semibold text-white">{kpis.total_count}</div>
+                  <div className="text-2xl font-semibold text-atc-white">{kpis.total_count}</div>
                   <div className="text-[11px] text-neutral-500 mt-1 space-x-2">
                     {Object.entries(kpis.by_status || {}).map(([k, v]) => (
                       <span key={k}>{t(`status.${k}`) !== `status.${k}` ? t(`status.${k}`) : k}: <span className="text-neutral-300">{v as number}</span></span>
@@ -99,7 +99,7 @@ export default function Overview() {
             </Card>
 
             <Card title={t('overview.auditExports')}>
-              <div className="text-2xl font-semibold text-white">{exports.length}</div>
+              <div className="text-2xl font-semibold text-atc-white">{exports.length}</div>
               <p className="text-[11px] text-neutral-500 mt-1">{t('overview.totalReports')}</p>
             </Card>
           </div>

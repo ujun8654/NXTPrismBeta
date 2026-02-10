@@ -215,7 +215,7 @@ function OverrideHistoryView({ data }: { data: any }) {
 function SectionHeader({ label, sub }: { label: string; sub: string }) {
   return (
     <div className="border-b border-neutral-800 pb-2">
-      <h4 className="text-sm font-medium text-white">{label}</h4>
+      <h4 className="text-sm font-medium text-atc-white">{label}</h4>
       <p className="text-[11px] text-neutral-500">{sub}</p>
     </div>
   );
@@ -233,7 +233,7 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <div className="text-lg font-semibold text-white">{value}</div>
+      <div className="text-lg font-semibold text-atc-white">{value}</div>
       <div className="text-[11px] text-neutral-500">{label}</div>
     </div>
   );
@@ -264,8 +264,8 @@ function ChainIntegrityBlock({ ci }: { ci: any }) {
       <StatusBadge variant={ci.valid ? 'ok' : 'error'} label={ci.valid ? t('rpt.chainValid') : t('rpt.chainInvalid')} />
       <div className="grid grid-cols-2 gap-3 text-[11px]">
         <div><span className="text-neutral-500">{t('rpt.recordsChecked')}: </span><span className="text-neutral-200">{ci.records_checked}</span></div>
-        {ci.first_invalid_at != null && <div><span className="text-red-400">{t('rpt.invalidAtSeq')}: #{ci.first_invalid_at}</span></div>}
-        {ci.error && <div className="text-red-400 col-span-2">{ci.error}</div>}
+        {ci.first_invalid_at != null && <div><span className="text-atc-red">{t('rpt.invalidAtSeq')}: #{ci.first_invalid_at}</span></div>}
+        {ci.error && <div className="text-atc-red col-span-2">{ci.error}</div>}
       </div>
     </div>
   );

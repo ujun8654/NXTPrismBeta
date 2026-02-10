@@ -64,7 +64,7 @@ export default function AuditReports() {
   return (
     <div className="space-y-5 max-w-5xl">
       <div>
-        <h2 className="text-lg font-semibold text-white">{t('report.title')}</h2>
+        <h2 className="text-lg font-semibold text-atc-white">{t('report.title')}</h2>
         <p className="text-xs text-neutral-500 mt-0.5">{t('report.desc')}</p>
       </div>
 
@@ -92,7 +92,7 @@ export default function AuditReports() {
             <StatusBadge variant={result.error ? 'error' : 'ok'} label={result.error ? t('common.failed') : t('common.success')} />
           </div>
           {result.error ? (
-            <p className="text-red-400 text-xs">{result.error}</p>
+            <p className="text-atc-red text-xs">{result.error}</p>
           ) : (
             <div className="space-y-3">
               <ReportViewer type={result.type} data={result.data} />

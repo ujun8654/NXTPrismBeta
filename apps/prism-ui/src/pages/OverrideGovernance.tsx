@@ -51,7 +51,7 @@ export default function OverrideGovernance() {
   return (
     <div className="space-y-5 max-w-5xl">
       <div>
-        <h2 className="text-lg font-semibold text-white">{t('override.title')}</h2>
+        <h2 className="text-lg font-semibold text-atc-white">{t('override.title')}</h2>
         <p className="text-xs text-neutral-500 mt-0.5">{t('override.desc')}</p>
       </div>
 
@@ -186,7 +186,7 @@ export default function OverrideGovernance() {
 function KpiCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-3 text-center">
-      <div className="text-xl font-semibold text-white">{value}</div>
+      <div className="text-xl font-semibold text-atc-white">{value}</div>
       <div className="text-[11px] text-neutral-500 mt-0.5">{label}</div>
     </div>
   );
