@@ -10,10 +10,10 @@
 NXTPrism은 **Trust & Evidence Infrastructure**로, AI와 운영 시스템의 의사결정을 **기록하고, 엮고, 판단하고, 증명**하는 플랫폼이다.
 
 ```
-외부 시스템 (드론, 센서, 운영앱)
-        │
-        │  데이터 전송 (REST API)
-        ▼
+외부 시스템 (드론, 센서, 운영앱)       브라우저
+        │                              │
+        │  데이터 전송 (REST API)       │  Dashboard (React)
+        ▼                              ▼
 ┌──────────────────────────────────────────┐
 │              NXTPrism API Server          │
 │                                          │
@@ -387,6 +387,7 @@ NXTPrismBeta/
     export-audit/        감사 보고서 내보내기 (5가지 보고서)
   apps/
     prism-api/           Fastify REST API 서버
+    prism-ui/            React 대시보드 (Vite + Tailwind)
   scripts/
     db/                  DB 마이그레이션 SQL
     test-*.ts            각 패키지 테스트 스크립트
@@ -564,6 +565,23 @@ NXTPrismBeta/
 | GET | `/v1/exports/:export_id` | 이전 내보내기 조회 |
 | GET | `/v1/exports?tenant_id=...` | 내보내기 이력 목록 |
 
+### 3.9 `prism-ui` — 대시보드 UI
+
+React 18 + Vite + Tailwind CSS 기반의 ATC 터미널 스타일 대시보드.
+
+**5개 페이지:**
+
+| 페이지 | 경로 | 설명 |
+|--------|------|------|
+| Overview | `/` | 헬스체크, 체인 무결성, Override KPI, 최근 보고서 |
+| Evidence Chain | `/evidence` | 체인 헤드, 무결성 검증, 체크포인트 생성, 증거 조회 |
+| State Machine | `/state` | 자산 상태 조회, 전이 이력, 상태 플로우 시각화 |
+| Override Governance | `/overrides` | Override 목록, KPI 대시보드, 상세 조회 |
+| Audit Reports | `/reports` | 5가지 보고서 생성 버튼, 내보내기 목록, JSON 뷰어 |
+
+**기술 스택:** React 18, Vite 5, Tailwind CSS 3, React Router 6
+**디자인:** 다크 테마 (bg-gray-950) + phospho green (text-green-400) + JetBrains Mono
+
 ---
 
 ## 5. 테이블 관계도
@@ -609,7 +627,7 @@ state_machines (독립 — transition_records.machine_id로 참조)
 | STEP 6 | Decision Replay + API | 완료 | TRACE/DETERMINISTIC/FULL 3모드, 정책 drift 분석, 6개 테스트 PASS |
 | STEP 7 | Override Governance | 완료 | 다중 승인, Evidence Pack 자동 생성, KPI 추적, 만료/중복 방지, 8개 테스트 PASS |
 | STEP 8 | Export + Audit Report | 완료 | 5가지 보고서, 해시 무결성, DB 저장, 7개 테스트 PASS |
-| STEP 9 | Dashboard UI | 미구현 | |
+| STEP 9 | Dashboard UI | 완료 | React 18 + Vite + Tailwind, ATC 다크 테마, 5개 페이지 |
 | STEP 10 | Deployment | 미구현 | |
 
 > **참고:** STEP 4는 아키텍처 스펙에 별도 정의 없음 (번호 건너뜀).
@@ -641,6 +659,13 @@ SUPABASE_SERVICE_KEY=eyJ...
 ```bash
 cd apps/prism-api && pnpm dev
 # → http://localhost:3000
+```
+
+**대시보드 실행:**
+```bash
+cd apps/prism-ui && pnpm dev
+# → http://localhost:5173
+# (API 서버가 먼저 실행되어 있어야 함)
 ```
 
 **테스트 실행:**
