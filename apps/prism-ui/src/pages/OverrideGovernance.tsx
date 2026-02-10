@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import JsonViewer from '../components/JsonViewer';
 import { useI18n } from '../i18n';
@@ -12,10 +12,10 @@ export default function OverrideGovernance() {
   const { t } = useI18n();
   const [kpis, setKpis] = useState<any>(null);
   const [overrides, setOverrides] = useState<any[]>([]);
-  const [selected, setSelected] = useState<any>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedData, setExpandedData] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
-  const detailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadData(); }, [statusFilter]);
 
@@ -31,11 +31,15 @@ export default function OverrideGovernance() {
     setLoading(false);
   }
 
-  async function handleSelect(overrideId: string) {
-    try {
-      setSelected(await getOverrideDetail(overrideId));
-      setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-    } catch {}
+  async function handleToggle(overrideId: string) {
+    if (expandedId === overrideId) {
+      setExpandedId(null);
+      setExpandedData(null);
+      return;
+    }
+    setExpandedId(overrideId);
+    setExpandedData(null);
+    try { setExpandedData(await getOverrideDetail(overrideId)); } catch {}
   }
 
   function tStatus(status: string) {
@@ -96,95 +100,85 @@ export default function OverrideGovernance() {
 
         {loading ? (
           <div className="p-4 text-neutral-500 text-xs">{t('common.loading')}</div>
+        ) : overrides.length === 0 ? (
+          <div className="px-4 py-8 text-center text-neutral-600 text-xs">{t('override.noOverrides')}</div>
         ) : (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-[11px] text-neutral-500 border-b border-neutral-800/50">
-                <th className="text-left px-4 py-2 font-medium">{t('common.status')}</th>
-                <th className="text-left px-4 py-2 font-medium">{t('override.reason')}</th>
-                <th className="text-left px-4 py-2 font-medium">{t('override.transition')}</th>
-                <th className="text-left px-4 py-2 font-medium">{t('common.by')}</th>
-                <th className="text-left px-4 py-2 font-medium">{t('common.time')}</th>
-                <th className="text-left px-4 py-2 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {overrides.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-neutral-600">{t('override.noOverrides')}</td></tr>
-              ) : (
-                overrides.map((o: any) => (
-                  <tr key={o.override_id} className="border-b border-neutral-800/30 hover:bg-white/[0.02]">
-                    <td className="px-4 py-2"><StatusBadge variant={STATUS_VARIANT[o.status] || 'neutral'} label={tStatus(o.status)} /></td>
-                    <td className="px-4 py-2 text-neutral-300">{o.reason_code}</td>
-                    <td className="px-4 py-2 text-neutral-400">{o.from_state} → {o.to_state}</td>
-                    <td className="px-4 py-2 text-neutral-400">{o.requested_by}</td>
-                    <td className="px-4 py-2 text-neutral-500">{new Date(o.requested_at).toLocaleString('ko-KR')}</td>
-                    <td className="px-4 py-2">
-                      <button onClick={() => handleSelect(o.override_id)} className="text-[11px] text-neutral-400 hover:text-white">
-                        {t('common.detail')}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="divide-y divide-neutral-800/30">
+            {overrides.map((o: any) => {
+              const isOpen = expandedId === o.override_id;
+              return (
+                <div key={o.override_id}>
+                  {/* Row */}
+                  <button
+                    onClick={() => handleToggle(o.override_id)}
+                    className={`w-full flex items-center gap-4 px-4 py-2.5 text-xs text-left transition-colors hover:bg-white/[0.02] ${isOpen ? 'bg-white/[0.03]' : ''}`}
+                  >
+                    <span className="w-24 flex-shrink-0"><StatusBadge variant={STATUS_VARIANT[o.status] || 'neutral'} label={tStatus(o.status)} /></span>
+                    <span className="w-36 flex-shrink-0 text-neutral-300 truncate">{o.reason_code}</span>
+                    <span className="w-40 flex-shrink-0 text-neutral-400">{o.from_state} → {o.to_state}</span>
+                    <span className="w-24 flex-shrink-0 text-neutral-400 truncate">{o.requested_by}</span>
+                    <span className="flex-1 text-neutral-500 text-right">{new Date(o.requested_at).toLocaleString('ko-KR')}</span>
+                    <span className="text-neutral-600 text-[10px] ml-2">{isOpen ? '▾' : '▸'}</span>
+                  </button>
+
+                  {/* Inline Detail */}
+                  {isOpen && (
+                    <div className="px-4 pb-4 pt-1 bg-neutral-950/50 border-t border-neutral-800/50">
+                      {!expandedData ? (
+                        <p className="text-neutral-500 text-xs py-2">{t('common.loading')}</p>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-[11px]">
+                              <div>
+                                <span className="text-neutral-500 block">{t('common.status')}</span>
+                                <StatusBadge variant={STATUS_VARIANT[expandedData.status] || 'neutral'} label={tStatus(expandedData.status)} />
+                              </div>
+                              <div>
+                                <span className="text-neutral-500 block">{t('override.reason')}</span>
+                                <span className="text-neutral-200">{expandedData.reason_code}</span>
+                              </div>
+                              <div>
+                                <span className="text-neutral-500 block">{t('override.transition')}</span>
+                                <span className="text-neutral-200">{expandedData.from_state} → {expandedData.to_state}</span>
+                              </div>
+                              <div>
+                                <span className="text-neutral-500 block">{t('override.requestedBy')}</span>
+                                <span className="text-neutral-200">{expandedData.requested_by}</span>
+                              </div>
+                              <div>
+                                <span className="text-neutral-500 block">{t('override.requestedAt')}</span>
+                                <span className="text-neutral-200">{new Date(expandedData.requested_at).toLocaleString('ko-KR')}</span>
+                              </div>
+                            </div>
+
+                            {/* Approvals */}
+                            {expandedData.approvals && expandedData.approvals.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-neutral-800">
+                                <span className="text-neutral-500 text-[11px] block mb-1.5">{t('override.approvals')}</span>
+                                <div className="space-y-1">
+                                  {expandedData.approvals.map((a: any, i: number) => (
+                                    <div key={i} className="flex items-center gap-2 text-[11px]">
+                                      <StatusBadge variant={a.decision === 'APPROVE' ? 'ok' : 'error'} label={a.decision} />
+                                      <span className="text-neutral-300">{a.approver}</span>
+                                      <span className="text-neutral-600">{a.approved_at ? new Date(a.approved_at).toLocaleString('ko-KR') : ''}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <JsonViewer data={expandedData} title={t('common.showJson')} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
-
-      {/* Detail Panel */}
-      {selected && (
-        <div ref={detailRef} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-medium text-neutral-400">{t('override.detailTitle')}</h3>
-            <button onClick={() => setSelected(null)} className="text-[11px] text-neutral-500 hover:text-neutral-300">{t('common.close')}</button>
-          </div>
-
-          {/* Human-readable summary */}
-          <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-3 mb-3">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-[11px]">
-              <div>
-                <span className="text-neutral-500 block">{t('common.status')}</span>
-                <StatusBadge variant={STATUS_VARIANT[selected.status] || 'neutral'} label={tStatus(selected.status)} />
-              </div>
-              <div>
-                <span className="text-neutral-500 block">{t('override.reason')}</span>
-                <span className="text-neutral-200">{selected.reason_code}</span>
-              </div>
-              <div>
-                <span className="text-neutral-500 block">{t('override.transition')}</span>
-                <span className="text-neutral-200">{selected.from_state} → {selected.to_state}</span>
-              </div>
-              <div>
-                <span className="text-neutral-500 block">{t('override.requestedBy')}</span>
-                <span className="text-neutral-200">{selected.requested_by}</span>
-              </div>
-              <div>
-                <span className="text-neutral-500 block">{t('override.requestedAt')}</span>
-                <span className="text-neutral-200">{new Date(selected.requested_at).toLocaleString('ko-KR')}</span>
-              </div>
-            </div>
-
-            {/* Approvals */}
-            {selected.approvals && selected.approvals.length > 0 && (
-              <div>
-                <span className="text-neutral-500 text-[11px] block mb-1.5">{t('override.approvals')}</span>
-                <div className="space-y-1">
-                  {selected.approvals.map((a: any, i: number) => (
-                    <div key={i} className="flex items-center gap-2 text-[11px]">
-                      <StatusBadge variant={a.decision === 'APPROVE' ? 'ok' : 'error'} label={a.decision} />
-                      <span className="text-neutral-300">{a.approver}</span>
-                      <span className="text-neutral-600">{a.approved_at ? new Date(a.approved_at).toLocaleString('ko-KR') : ''}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <JsonViewer data={selected} title={t('common.showJson')} />
-        </div>
-      )}
     </div>
   );
 }
