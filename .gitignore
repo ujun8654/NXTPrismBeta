@@ -10,3 +10,5 @@ coverage/
 nul
 *.pptx
 *.pdf
+
+.vercel

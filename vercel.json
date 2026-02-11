@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd apps/prism-ui && pnpm run build",
+  "outputDirectory": "apps/prism-ui/dist",
+  "installCommand": "pnpm install",
+  "framework": "vite"
+}
