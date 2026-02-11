@@ -1,6 +1,6 @@
 # NXTPrism DB & System Guide
 
-> 최종 업데이트: 2026-02-10
+> 최종 업데이트: 2026-02-11
 > 이 문서는 NXTPrism의 모든 DB 테이블, 패키지, API 엔드포인트를 기록한다.
 
 ---
@@ -505,7 +505,7 @@ NXTPrismBeta/
 ### 4.2 Evidence (증거)
 | Method | Path | 설명 |
 |--------|------|------|
-| POST | `/v1/evidence:create` | 증거 추가 |
+| POST | `/v1/evidence/create` | 증거 추가 |
 | GET | `/v1/evidence/:evidence_id` | 증거 조회 |
 
 ### 4.3 Chain (체인)
@@ -518,26 +518,26 @@ NXTPrismBeta/
 ### 4.4 Policy (정책)
 | Method | Path | 설명 |
 |--------|------|------|
-| POST | `/v1/policies:publish` | 정책 배포 |
+| POST | `/v1/policies/publish` | 정책 배포 |
 | GET | `/v1/policies/:policy_id/active` | 활성 정책 조회 |
 | POST | `/v1/policies/:policy_id/evaluate` | 정책 평가 |
 
 ### 4.5 State Machine (상태 머신)
 | Method | Path | 설명 |
 |--------|------|------|
-| POST | `/v1/state-machines:register` | 머신 정의 등록 |
+| POST | `/v1/state-machines/register` | 머신 정의 등록 |
 | GET | `/v1/state-machines/:machine_id` | 머신 정의 조회 |
-| POST | `/v1/state-machines/:machine_id/transitions:authorize` | Gate Token 발급 |
-| POST | `/v1/state-machines/:machine_id/transitions:commit` | 전이 실행 |
+| POST | `/v1/state-machines/:machine_id/transitions/authorize` | Gate Token 발급 |
+| POST | `/v1/state-machines/:machine_id/transitions/commit` | 전이 실행 |
 | GET | `/v1/state-machines/:machine_id/assets/:type/:id/state` | 자산 상태 조회 |
 | GET | `/v1/state-machines/:machine_id/assets/:type/:id/history` | 전이 이력 조회 |
 
 ### 4.6 Evidence Pack (증거 팩)
 | Method | Path | 설명 |
 |--------|------|------|
-| POST | `/v1/evidence-packs:build` | Evidence Pack 생성 |
+| POST | `/v1/evidence-packs/build` | Evidence Pack 생성 |
 | GET | `/v1/decisions/:decision_id/evidence-pack` | Decision ID로 팩 조회 |
-| POST | `/v1/evidence-packs:verify` | 팩 무결성 검증 |
+| POST | `/v1/evidence-packs/verify` | 팩 무결성 검증 |
 
 ### 4.7 Decision Replay (결정 재현)
 | Method | Path | 설명 |
@@ -547,7 +547,7 @@ NXTPrismBeta/
 ### 4.8 Override Governance (Override 거버넌스)
 | Method | Path | 설명 |
 |--------|------|------|
-| POST | `/v1/overrides:create` | Override 요청 생성 |
+| POST | `/v1/overrides/create` | Override 요청 생성 |
 | GET | `/v1/overrides/:override_id` | Override 조회 |
 | POST | `/v1/overrides/:override_id/approve` | Override 승인 |
 | POST | `/v1/overrides/:override_id/reject` | Override 거부 |
@@ -557,11 +557,11 @@ NXTPrismBeta/
 ### 4.9 Export & Audit Report (감사 보고서)
 | Method | Path | 설명 |
 |--------|------|------|
-| POST | `/v1/exports:audit-report` | 종합 감사 보고서 생성 |
-| POST | `/v1/exports:decision-export` | 단일 결정 내보내기 |
-| POST | `/v1/exports:chain-audit` | 체인 무결성 감사 |
-| POST | `/v1/exports:compliance-snapshot` | 규정 준수 스냅샷 |
-| POST | `/v1/exports:override-history` | Override 이력 내보내기 |
+| POST | `/v1/exports/audit-report` | 종합 감사 보고서 생성 |
+| POST | `/v1/exports/decision-export` | 단일 결정 내보내기 |
+| POST | `/v1/exports/chain-audit` | 체인 무결성 감사 |
+| POST | `/v1/exports/compliance-snapshot` | 규정 준수 스냅샷 |
+| POST | `/v1/exports/override-history` | Override 이력 내보내기 |
 | GET | `/v1/exports/:export_id` | 이전 내보내기 조회 |
 | GET | `/v1/exports?tenant_id=...` | 내보내기 이력 목록 |
 
@@ -580,7 +580,7 @@ React 18 + Vite + Tailwind CSS 기반의 ATC 터미널 스타일 대시보드.
 | Audit Reports | `/reports` | 5가지 보고서 생성 버튼, 내보내기 목록, JSON 뷰어 |
 
 **기술 스택:** React 18, Vite 5, Tailwind CSS 3, React Router 6
-**디자인:** FAA HF-STD-010A 기반 ATC 다크 테마 + CVD 3중 부호화 (§9 참조)
+**디자인:** FAA HF-STD-010A 기반 ATC 다크 테마 + CVD 3중 부호화 (§10 참조)
 
 ---
 
@@ -616,7 +616,7 @@ state_machines (독립 — transition_records.machine_id로 참조)
 
 ---
 
-## 6. 현재 구현 상태 (2026-02-10)
+## 6. 현재 구현 상태 (2026-02-11)
 
 | STEP | 기능 | 상태 | 비고 |
 |------|------|------|------|
@@ -628,21 +628,36 @@ state_machines (독립 — transition_records.machine_id로 참조)
 | STEP 7 | Override Governance | 완료 | 다중 승인, Evidence Pack 자동 생성, KPI 추적, 만료/중복 방지, 8개 테스트 PASS |
 | STEP 8 | Export + Audit Report | 완료 | 5가지 보고서, 해시 무결성, DB 저장, 7개 테스트 PASS |
 | STEP 9 | Dashboard UI | 완료 | React 18 + Vite + Tailwind, ATC 다크 테마, 5개 페이지 |
-| STEP 10 | Deployment | 미구현 | |
+| STEP 10 | Deployment | 완료 | Vercel (UI) + Railway (API) + Supabase (DB) |
 
 > **참고:** STEP 4는 아키텍처 스펙에 별도 정의 없음 (번호 건너뜀).
 
 ---
 
-## 7. GitHub 저장소
+## 7. 배포 (Deployment)
 
-- **URL:** https://github.com/ujun8654/NXTPrismBeta (Private)
-- **브랜치:** `main`
-- **제외 파일:** `.env`, `node_modules/`, `*.pptx`, `*.pdf`, `nul`
+| 서비스 | 플랫폼 | URL |
+|--------|--------|-----|
+| Dashboard UI | Vercel | https://nxtprism-dashboard.vercel.app |
+| API Server | Railway | https://prism-api-production-a66f.up.railway.app |
+| Database | Supabase | (콘솔에서 접속) |
+
+- Vercel: GitHub push 시 자동 빌드/배포 (monorepo — `apps/prism-ui`)
+- Railway: GitHub push 시 자동 빌드/배포 (Build: `pnpm install`, Start: `cd apps/prism-api && pnpm start`)
+- Railway 환경변수: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- Vercel 환경변수: `VITE_API_URL` (Railway API URL)
 
 ---
 
-## 8. 환경 설정
+## 8. GitHub 저장소
+
+- **URL:** https://github.com/ujun8654/NXTPrismBeta (Private)
+- **브랜치:** `main`
+- **제외 파일:** `.env`, `node_modules/`, `.vercel/`, `*.pptx`, `*.pdf`, `nul`
+
+---
+
+## 9. 환경 설정
 
 ```
 # .env
@@ -686,14 +701,20 @@ npx tsx scripts/tamper-detection-demo.ts   # 변조 탐지 데모
 npx tsx scripts/verify-chain.ts            # 체인 무결성 검증
 ```
 
+**시드 데이터 (대시보드 테스트용):**
+```bash
+npx tsx scripts/seed-dashboard-data.ts     # 37 증거 + 6 드론 + 6 Override + 8 보고서
+```
+> API 서버(`pnpm dev`)가 실행 중이어야 함. 테스트 매뉴얼은 `dashboard-test-manual.md` 참조.
+
 ---
 
-## 9. UI 디자인 시스템 (FAA HF-STD-010A)
+## 10. UI 디자인 시스템 (FAA HF-STD-010A)
 
 대시보드 색상 체계는 **FAA HF-STD-010A** (항공관제 화면 표준)에 기반한다.
 CVD(색각 이상) 접근성을 위해 **색상 + 아이콘 + 텍스트** 3중 부호화를 적용한다.
 
-### 9.1 컬러 팔레트
+### 10.1 컬러 팔레트
 
 **전경 (Foreground)**
 
@@ -720,7 +741,7 @@ CVD(색각 이상) 접근성을 위해 **색상 + 아이콘 + 텍스트** 3중 �
 | `atc-wx-yellow` | `#5A4A14` | 날씨(Yellow) 배경 |
 | `atc-wx-red` | `#5D2E59` | 날씨(Red) 배경 |
 
-### 9.2 상태 뱃지 (StatusBadge)
+### 10.2 상태 뱃지 (StatusBadge)
 
 CVD 접근성을 위해 각 상태에 고유 아이콘을 부여한다:
 
@@ -732,12 +753,12 @@ CVD 접근성을 위해 각 상태에 고유 아이콘을 부여한다:
 | info | `#5E8DF6` (Blue) | ● | 정보 |
 | neutral | `#B3B3B3` (Gray) | — | 비활성, 만료 |
 
-### 9.3 Tailwind 설정
+### 10.3 Tailwind 설정
 
 커스텀 토큰은 `tailwind.config.js`의 `theme.extend.colors.atc`에 정의되어 있다.
 사용 예: `text-atc-white`, `bg-atc-black`, `text-atc-red`, `border-atc-blue`
 
-### 9.4 접근성 원칙 (ISO 9241-210, ANSI Z535)
+### 10.4 접근성 원칙 (ISO 9241-210, ANSI Z535)
 
 1. **색상만으로 의미 전달 금지** — 반드시 아이콘+텍스트 병행
 2. **고대비** — True black (#000) 배경 + 고명도 전경색
