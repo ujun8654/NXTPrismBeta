@@ -8,14 +8,33 @@ interface I18nCtx {
   t: (key: string) => string;
 }
 
+export type { Lang, I18nCtx };
+
 const translations: Record<string, Record<Lang, string>> = {
-  // ─── Nav / Layout ───
+  // ─── Workspace Tabs ───
+  'ws.monitor':  { en: 'Monitor',      ko: '모니터' },
+  'ws.evidence': { en: 'Evidence',     ko: '증거' },
+  'ws.state':    { en: 'State & Gate', ko: '상태·게이트' },
+  'ws.replay':   { en: 'Replay',       ko: '리플레이' },
+  'ws.audit':    { en: 'Audit',        ko: '감사' },
+
+  // ─── Nav / Layout (legacy) ───
   'nav.overview': { en: 'Overview', ko: '개요' },
   'nav.evidence': { en: 'Evidence Chain', ko: '증거 체인' },
   'nav.state': { en: 'State Machine', ko: '상태 머신' },
   'nav.overrides': { en: 'Overrides', ko: '오버라이드' },
   'nav.reports': { en: 'Audit Reports', ko: '감사 보고서' },
   'lang.toggle': { en: '한국어', ko: 'English' },
+
+  // ─── Replay ───
+  'replay.title': { en: 'Decision Replay', ko: '의사결정 리플레이' },
+  'replay.desc': { en: 'Replay past decisions step by step', ko: '과거 의사결정을 단계별로 재생합니다' },
+  'replay.noData': { en: 'Select a decision to replay', ko: '리플레이할 의사결정을 선택하세요' },
+  'replay.step': { en: 'Step', ko: '단계' },
+  'replay.play': { en: 'Play', ko: '재생' },
+  'replay.pause': { en: 'Pause', ko: '일시정지' },
+  'replay.asWas': { en: 'As-Was', ko: '당시 기준' },
+  'replay.asIs': { en: 'As-Is', ko: '현재 기준' },
 
   // ─── Common ───
   'common.refresh': { en: 'Refresh', ko: '새로고침' },
