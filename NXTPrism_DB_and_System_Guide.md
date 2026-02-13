@@ -1,6 +1,6 @@
 # NXTPrism DB & System Guide
 
-> 최종 업데이트: 2026-02-11
+> 최종 업데이트: 2026-02-13
 > 이 문서는 NXTPrism의 모든 DB 테이블, 패키지, API 엔드포인트를 기록한다.
 
 ---
@@ -567,20 +567,28 @@ NXTPrismBeta/
 
 ### 3.9 `prism-ui` — 대시보드 UI
 
-React 18 + Vite + Tailwind CSS 기반의 ATC 터미널 스타일 대시보드.
+React 18 + Vite + Tailwind CSS 기반의 ATC 콘솔 스타일 워크스페이스 대시보드.
 
-**5개 페이지:**
+**5개 워크스페이스 (상단 탭 네비게이션):**
 
+| # | 워크스페이스 | 경로 | 단축키 | 설명 |
+|---|------------|------|--------|------|
+| 1 | MONITOR | `/` | Alt+1 | KPI 카드 4개 + 최근 보고서 테이블 + Alert Queue (우측 패널) |
+| 2 | EVIDENCE | `/evidence` | Alt+2 | Chain Browser (좌측) + Evidence Inspector (우측) |
+| 3 | STATE & GATE | `/state` | Alt+3 | 자산 상태 조회 + State Flow + Gate Token 정보 (우측) |
+| 4 | REPLAY | `/replay` | Alt+4 | 결정 재현 플레이어 (As-Was vs As-Is 비교) |
+| 5 | AUDIT | `/audit` | Alt+5 | 보고서 생성 + Export History + Audit Readiness Score (우측) |
+
+**추가 페이지:**
 | 페이지 | 경로 | 설명 |
 |--------|------|------|
-| Overview | `/` | 헬스체크, 체인 무결성, Override KPI, 최근 보고서 |
-| Evidence Chain | `/evidence` | 체인 헤드, 무결성 검증, 체크포인트 생성, 증거 조회 |
-| State Machine | `/state` | 자산 상태 조회, 전이 이력, 상태 플로우 시각화 |
-| Override Governance | `/overrides` | Override 목록, KPI 대시보드, 상세 조회 |
-| Audit Reports | `/reports` | 5가지 보고서 생성 버튼, 내보내기 목록, JSON 뷰어 |
+| Override Governance | `/overrides` | Override 목록, KPI, 상세 조회 (STATE & GATE에서 링크) |
 
-**기술 스택:** React 18, Vite 5, Tailwind CSS 3, React Router 6
-**디자인:** FAA HF-STD-010A 기반 ATC 다크 테마 + CVD 3중 부호화 (§10 참조)
+**기술 스택:** React 18, Vite 5, Tailwind CSS 3, React Router 6, react-resizable-panels, framer-motion
+**디자인:** FAA HF-STD-010A 기반 ATC 콘솔 + Glassmorphism + Glow 이펙트 (§10 참조)
+**폰트:** Orbitron (display) + Exo 2 (body) + JetBrains Mono (mono)
+
+**Link Channel:** 워크스페이스 간 엔티티(evidence, asset, override, export) 공유 시스템. 하단 상태바에 현재 링크된 엔티티 표시.
 
 ---
 
@@ -616,7 +624,7 @@ state_machines (독립 — transition_records.machine_id로 참조)
 
 ---
 
-## 6. 현재 구현 상태 (2026-02-11)
+## 6. 현재 구현 상태 (2026-02-13)
 
 | STEP | 기능 | 상태 | 비고 |
 |------|------|------|------|
@@ -627,7 +635,8 @@ state_machines (독립 — transition_records.machine_id로 참조)
 | STEP 6 | Decision Replay + API | 완료 | TRACE/DETERMINISTIC/FULL 3모드, 정책 drift 분석, 6개 테스트 PASS |
 | STEP 7 | Override Governance | 완료 | 다중 승인, Evidence Pack 자동 생성, KPI 추적, 만료/중복 방지, 8개 테스트 PASS |
 | STEP 8 | Export + Audit Report | 완료 | 5가지 보고서, 해시 무결성, DB 저장, 7개 테스트 PASS |
-| STEP 9 | Dashboard UI | 완료 | React 18 + Vite + Tailwind, ATC 다크 테마, 5개 페이지 |
+| STEP 9 | Dashboard UI | 완료 | React 18 + Vite + Tailwind, ATC 콘솔 워크스페이스, 5개 탭 + Replay + Audit Readiness |
+| STEP 9.5 | UI/UX 리디자인 | 완료 | Glassmorphism + Glow + 멀티패널 + 단축키 + Link Channel |
 | STEP 10 | Deployment | 완료 | Vercel (UI) + Railway (API) + Supabase (DB) |
 
 > **참고:** STEP 4는 아키텍처 스펙에 별도 정의 없음 (번호 건너뜀).
@@ -758,9 +767,59 @@ CVD 접근성을 위해 각 상태에 고유 아이콘을 부여한다:
 커스텀 토큰은 `tailwind.config.js`의 `theme.extend.colors.atc`에 정의되어 있다.
 사용 예: `text-atc-white`, `bg-atc-black`, `text-atc-red`, `border-atc-blue`
 
-### 10.4 접근성 원칙 (ISO 9241-210, ANSI Z535)
+### 10.4 Glassmorphism + Glow 시스템 (v2)
+
+**Glass 클래스 (`index.css`):**
+
+| 클래스 | 용도 |
+|--------|------|
+| `glass-panel` | 상단 바, 하단 바 등 고정 패널 (`backdrop-filter: blur(12px)`) |
+| `glass-card` | 카드, 버튼 등 콘텐츠 컨테이너 (`backdrop-filter: blur(8px)`) |
+| `glass-panel-hover` | 호버 시 밝아지는 인터랙티브 카드 |
+
+**Glow Border 클래스:**
+
+| 클래스 | 색상 | 용도 |
+|--------|------|------|
+| `glow-border-green` | `#23E162` | 정상 상태 강조 |
+| `glow-border-red` | `#FF1320` | 위험/에러 강조 |
+| `glow-border-orange` | `#FE930D` | 경고 강조 |
+| `glow-border-aqua` | `#07CDED` | 하이라이트, 활성 탭 |
+| `glow-border-blue` | `#5E8DF6` | 정보 강조 |
+
+**Glow Shadow (Tailwind `boxShadow`):**
+
+`shadow-glow-green`, `shadow-glow-red`, `shadow-glow-orange`, `shadow-glow-aqua` 등 — StatusBadge의 `glow` prop에서 사용.
+
+**배경 효과:**
+
+| 클래스 | 설명 |
+|--------|------|
+| `radar-grid` | CSS gradient 기반 레이더 그리드 패턴 (aqua 틴트) |
+| `noise-overlay` | `::after` 가상 요소로 미세한 노이즈 텍스처 오버레이 |
+| `ws-tab-active` | 활성 워크스페이스 탭 하단 aqua 인디케이터 |
+
+### 10.5 타이포그래피
+
+| 용도 | 폰트 | Tailwind 클래스 |
+|------|-------|-----------------|
+| Display (제목, 숫자) | Orbitron | `font-display` |
+| Body (본문) | Exo 2 | `font-sans` (기본) |
+| Monospace (코드, 해시) | JetBrains Mono | `font-mono` |
+
+### 10.6 애니메이션 (framer-motion)
+
+| 효과 | 적용 위치 |
+|------|----------|
+| Stagger fade-up | MONITOR KPI 카드 진입 |
+| Fade-in + slide | Alert Queue 알림 카드 |
+| Page transition | 워크스페이스 전환 시 fade + y-offset |
+| Pulse dot | 로고 옆 aqua 상태 표시등 |
+
+### 10.7 접근성 원칙 (ISO 9241-210, ANSI Z535)
 
 1. **색상만으로 의미 전달 금지** — 반드시 아이콘+텍스트 병행
 2. **고대비** — True black (#000) 배경 + 고명도 전경색
 3. **3중 부호화** — Color + Icon + Label로 상태 표현
-4. **일관성** — 전 페이지 동일한 색상 의미 유지
+4. **일관성** — 전 워크스페이스 동일한 색상 의미 유지
+5. **키보드 접근성** — Alt+1~5 워크스페이스 전환

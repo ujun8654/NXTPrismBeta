@@ -1,6 +1,7 @@
 # NXTPrism Dashboard — 테스트 매뉴얼 (확장판)
 
 > 작성일: 2026-02-10
+> UI 업데이트: 2026-02-13 — ATC 콘솔 스타일 워크스페이스 리디자인
 
 ## 접속 URL
 
@@ -76,38 +77,67 @@
 
 ---
 
-## 1. Overview (시스템 개요) 페이지 테스트
+## UI 구조 (v2 — ATC 워크스페이스)
+
+대시보드는 **상단 워크스페이스 탭** 5개로 구성된다 (사이드바 → 상단 탭 변경).
+
+| # | 워크스페이스 | 경로 | 단축키 | 설명 |
+|---|------------|------|--------|------|
+| 1 | MONITOR | `/` | Alt+1 | 시스템 상태 + Alert Queue |
+| 2 | EVIDENCE | `/evidence` | Alt+2 | 체인 브라우저 + 증거 인스펙터 |
+| 3 | STATE & GATE | `/state` | Alt+3 | 자산 상태 + Gate Token 정보 |
+| 4 | REPLAY | `/replay` | Alt+4 | 결정 재현 플레이어 |
+| 5 | AUDIT | `/audit` | Alt+5 | 감사 보고서 + Audit Readiness |
+
+**디자인 특징:**
+- Orbitron + Exo 2 폰트 (ATC 콘솔 스타일)
+- Glassmorphism (glass-panel, glass-card) + Glow 이펙트
+- Radar grid 배경 + Noise overlay 텍스처
+- 리사이즈 가능한 멀티패널 레이아웃 (드래그로 패널 크기 조절)
+- Link Channel: 하단 상태바에 워크스페이스 간 공유 엔티티 표시
+
+---
+
+## 1. MONITOR 워크스페이스 테스트 (Overview)
 
 ### TC-OV-01: 시스템 상태 확인
 
-1. Overview 페이지 접속
-2. 확인 사항:
-   - API Server: `"ok"` + 타임스탬프
-   - Chain Integrity: `"VALID"`
-   - Override Summary: 총 6건 이상
-   - Audit Exports: 8건 이상
-   - Recent Exports 테이블: 최근 감사 보고서 목록
+1. MONITOR 워크스페이스 접속 (상단 탭 첫 번째 또는 Alt+1)
+2. **좌측 패널** 확인 사항:
+   - API Server 카드: `"ok"` + 타임스탬프 (녹색 glow)
+   - Chain Integrity 카드: `"VALID"` (녹색 glow)
+   - Override Summary 카드: 총 6건 이상 + status별 분포
+   - Audit Exports 카드: 8건 이상
+   - Recent Exports 테이블: 최근 감사 보고서 목록 (최대 10건)
+3. **우측 패널 (Alert Queue)** 확인:
+   - SYSTEM OK 알림 (녹색 glow border)
+   - INTEGRITY VERIFIED 알림 (체인 유효 시)
+   - OVERRIDE WARNING (PENDING_APPROVAL 있을 경우 — 주황색 glow)
 
 ### TC-OV-02: 새로고침
 
 1. Refresh 버튼 클릭
 2. 모든 데이터가 다시 로드되는지 확인
 
+### TC-OV-03: 패널 리사이즈
+
+1. 좌우 패널 사이 구분선을 드래그
+2. 패널 크기가 조절되는지 확인
+
 ---
 
-## 2. Evidence Chain (증거 체인) 페이지 테스트
+## 2. EVIDENCE 워크스페이스 테스트 (증거 체인)
 
 ### TC-EC-01: 체인 헤드 조회
 
-1. Evidence Chain 페이지 접속
-2. 확인:
-   - 시퀀스 번호 50+ 이상
-   - 최신 해시값 표시
+1. EVIDENCE 워크스페이스 접속 (상단 탭 또는 Alt+2)
+2. **좌측 패널 (Chain Browser)** 확인:
+   - Chain Head 카드: 시퀀스 번호 50+ 이상, 최신 해시값 표시
 
 ### TC-EC-02: 체인 무결성 검증
 
 1. **Verify** 버튼 클릭
-2. 확인: `valid: true`, 검증 레코드 수 표시
+2. 확인: `valid: true` (녹색 glow 뱃지), 검증 레코드 수 표시
 
 ### TC-EC-03: 체크포인트 생성
 
@@ -119,7 +149,7 @@
 
 ### TC-EC-04: 증거 개별 조회 — DRONE-001 비행 전 점검
 
-1. Evidence Lookup에 증거 ID 입력
+1. **우측 패널 (Evidence Inspector)** 에서 증거 ID 입력
    - Supabase에서 `evidence_records` 테이블 조회하여 ID 확인
 2. 확인: `PRE_FLIGHT_CHECK` payload, `battery_soh: 94.2`
 
@@ -135,17 +165,19 @@
 
 ---
 
-## 3. State Machine (자산 상태) 페이지 테스트
+## 3. STATE & GATE 워크스페이스 테스트 (자산 상태)
 
 ### TC-SM-01: DRONE-001 — GROUNDED (3단계 전이)
 
-- **입력**: `drone-airworthiness` / `drone` / `DRONE-001`
+- **좌측 패널 (Asset Query)**: `drone-airworthiness` / `drone` / `DRONE-001` 입력 후 Query 클릭
 - **확인**:
-  - 현재 상태: **GROUNDED** (빨간색)
+  - 현재 상태: **GROUNDED** (빨간색 glow)
+  - State Flow: 5개 상태 노드 중 GROUNDED에 aqua glow
   - 전이 이력 3건:
     1. `SERVICEABLE` → `MONITORING` (health-monitor)
     2. `MONITORING` → `RESTRICTED` (policy-engine)
     3. `RESTRICTED` → `GROUNDED` (ops-controller-lee)
+- **우측 패널 (Gate Token & Overrides)**: Asset Info에 상태 표시, Override Governance 링크
 
 ### TC-SM-02: DRONE-002 — MONITORING (1단계 전이)
 
@@ -191,7 +223,9 @@
 
 ---
 
-## 4. Override Governance (Override 관리) 페이지 테스트
+## 4. Override Governance (Override 관리) 테스트
+
+> **접근 방법**: STATE & GATE 워크스페이스 우측 패널의 "Override Governance → View override requests" 링크 클릭, 또는 브라우저에서 `/overrides` 직접 접속
 
 ### TC-OG-01: KPI 대시보드
 
@@ -232,18 +266,19 @@
 
 ---
 
-## 5. Audit Reports (감사 보고서) 페이지 테스트
+## 5. AUDIT 워크스페이스 테스트 (감사 보고서)
 
 ### TC-AR-01: 기존 보고서 목록 확인
 
-1. 접속 시 확인:
+1. AUDIT 워크스페이스 접속 (상단 탭 또는 Alt+5)
+2. **좌측 패널** 확인:
    - Export History 테이블에 8건 이상 표시
    - 4종 x 2세트 (`seed-script` / `compliance-officer`)
 
 ### TC-AR-02: AUDIT_REPORT 생성
 
 1. **Audit Report** 버튼 클릭
-2. 확인: 새 보고서 생성, 테이블에 추가
+2. 확인: 새 보고서 생성, Result 카드에 ReportViewer + JSON 표시, 테이블에 추가
 
 ### TC-AR-03: CHAIN_AUDIT 생성
 
@@ -262,8 +297,55 @@
 
 ### TC-AR-06: 보고서 상세 보기
 
-1. 아무 행 클릭 (확장)
+1. Export History에서 아무 행 클릭 (확장)
 2. 확인: JSON 뷰어, `report_hash`, ReportViewer
+
+### TC-AR-07: Audit Readiness 확인 (신규)
+
+1. **우측 패널 (Audit Readiness)** 확인:
+   - Chain Integrity: VALID/INVALID 뱃지 + 레코드 수
+   - Override KPIs: Total, Avg Approval 시간, status별 분포
+   - Export Stats: 총 Export 수, Report Types 수
+   - **Readiness Score**: 0~100% (체인 무결성 40% + Override 거버넌스 30% + Export 커버리지 30%)
+
+---
+
+## 6. REPLAY 워크스페이스 테스트 (결정 재현)
+
+### TC-RP-01: 플레이어 UI 확인
+
+1. REPLAY 워크스페이스 접속 (상단 탭 또는 Alt+4)
+2. 확인:
+   - 플레이어 컨트롤: Step Back / Play / Step Forward 버튼
+   - As-Was / As-Is 비교 토글 버튼
+   - 타임라인 프로그레스 바
+   - Empty State: "결정 재현 데이터 없음" 메시지
+
+> **참고**: 현재 REPLAY 워크스페이스는 플레이어 UI 셸만 구현됨. API 연동은 향후 업데이트 예정.
+
+---
+
+## 7. 공통 UI 테스트
+
+### TC-UI-01: 키보드 단축키
+
+1. Alt+1 ~ Alt+5 키 입력
+2. 확인: 해당 워크스페이스로 즉시 전환
+
+### TC-UI-02: 언어 전환
+
+1. 상단 바 우측의 KO/EN 버튼 클릭
+2. 확인: 전체 UI 텍스트가 한국어 ↔ 영어로 전환
+
+### TC-UI-03: 패널 리사이즈
+
+1. 각 워크스페이스에서 좌우 패널 구분선 드래그
+2. 확인: 패널 크기가 부드럽게 조절됨
+
+### TC-UI-04: 반응형 확인
+
+1. 브라우저 창 크기를 줄이거나 모바일 뷰로 전환
+2. 확인: 레이아웃이 깨지지 않고 적응
 
 ---
 
